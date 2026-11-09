@@ -28,7 +28,7 @@ import skinCss from 'tinymce/skins/ui/oxide/skin.min.css?raw';
 import contentUiCss from 'tinymce/skins/ui/oxide/content.min.css?raw';
 import contentCss from 'tinymce/skins/content/default/content.min.css?raw';
 import { Editor } from '@tinymce/tinymce-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SAMPLE_CSS } from '../../seed/sampleCss';
 
 let skinAdded = false;
@@ -72,22 +72,51 @@ function pickImage(cb) {
   input.click();
 }
 
+// संदर्भ मोडसाठी: कर्सर/निवडीवरील formatting वाचा
+const ALIGN_MR = { left: 'डावीकडे (Left)', start: 'डावीकडे (Left)', center: 'मध्यभागी (Center)', right: 'उजवीकडे (Right)', end: 'उजवीकडे (Right)', justify: 'Justify' };
+function readFormat(ed) {
+  const node = ed.selection.getNode();
+  if (!node || node === ed.getBody()) return null;
+  const win = ed.getWin();
+  const cs = win.getComputedStyle(node);
+  let underline = false, strike = false;
+  for (let n = node; n && n !== ed.getBody(); n = n.parentElement) {
+    const d = win.getComputedStyle(n).textDecorationLine || '';
+    if (d.includes('underline') || n.nodeName === 'U') underline = true;
+    if (d.includes('line-through') || n.nodeName === 'S' || n.nodeName === 'STRIKE') strike = true;
+  }
+  const block = ed.dom.getParent(node, ed.dom.isBlock) || node;
+  const px = parseFloat(cs.fontSize) || 16;
+  const pt = Math.round(px * 0.75 * 2) / 2;
+  const fam = (cs.fontFamily || '').split(',')[0].replace(/["']/g, '').trim();
+  const rgb = cs.color.match(/\d+/g) || [0, 0, 0];
+  const hex = '#' + rgb.slice(0, 3).map((x) => Number(x).toString(16).padStart(2, '0')).join('');
+  return {
+    font: fam, size: `${pt} pt`, bold: Number(cs.fontWeight) >= 600 || cs.fontWeight === 'bold', italic: cs.fontStyle === 'italic', underline, strike,
+    align: ALIGN_MR[win.getComputedStyle(block).textAlign] || win.getComputedStyle(block).textAlign, color: hex,
+    block: { P: 'Paragraph', H1: 'Heading 1', H2: 'Heading 2', H3: 'Heading 3', H4: 'Heading 4', LI: 'List', TD: 'Table cell', TH: 'Table heading' }[block.nodeName] || block.nodeName,
+  };
+}
+const NAV_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', 'Shift', 'Control', 'Meta', 'Alt', 'Tab', 'Escape'];
+
 /**
  * value: सुरुवातीचा HTML (बदलल्यास editor मध्ये नवीन मजकूर)
  * onChange(html), onFirstInput(), blockPaste (विद्यार्थी), readOnly, height
+ * reference: नमुना — तोच संपादक पण बदल करता येत नाही; क्लिक केलेल्या मजकुराचे font / size / formatting toolbar व माहिती-पट्टीत दिसते
  */
-export default function WriterEditor({ value = '', onChange, onFirstInput, blockPaste, readOnly, height = 600 }) {
+export default function WriterEditor({ value = '', onChange, onFirstInput, blockPaste, readOnly, reference, height = 600 }) {
   addSkin();
   const first = useRef(false);
   const cb = useRef({ onChange, onFirstInput });
   cb.current = { onChange, onFirstInput };
+  const [fmt, setFmt] = useState(null);
   useEffect(() => { first.current = false; }, [value]);
 
-  return (
+  const editor = (
     <Editor
       initialValue={value}
       disabled={readOnly}
-      onEditorChange={(html) => {
+      onEditorChange={reference ? undefined : (html) => {
         if (!first.current) { first.current = true; cb.current.onFirstInput?.(); }
         cb.current.onChange?.(html);
       }}
@@ -95,11 +124,13 @@ export default function WriterEditor({ value = '', onChange, onFirstInput, block
         height,
         skin: false,
         content_css: false,
-        content_style: [contentCss, contentUiCss, PAGE_CSS, SAMPLE_CSS].join('\n'),
+        content_style: [contentCss, contentUiCss, PAGE_CSS, SAMPLE_CSS, reference ? 'body{caret-color:#2563eb;cursor:text}' : ''].join('\n'),
         promotion: false,
         branding: false,
-        menubar: readOnly ? false : 'file edit view insert format tools table help',
-        toolbar: readOnly ? false : 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough subscript superscript | forecolor backcolor | alignleft aligncenter alignright alignjustify | lineheight | bullist numlist outdent indent | table image link charmap pagebreak hr | removeformat | searchreplace preview fullscreen',
+        menubar: readOnly ? false : reference ? false : 'file edit view insert format tools table help',
+        toolbar: readOnly ? false : reference
+          ? 'blocks fontfamily fontsize | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | lineheight | bullist numlist'
+          : 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough subscript superscript | forecolor backcolor | alignleft aligncenter alignright alignjustify | lineheight | bullist numlist outdent indent | table image link charmap pagebreak hr | removeformat | searchreplace preview fullscreen',
         toolbar_mode: 'wrap',
         plugins: 'advlist autolink lists link image charmap preview searchreplace visualblocks visualchars code fullscreen insertdatetime table wordcount pagebreak nonbreaking help emoticons',
         font_family_formats: FONTS,
@@ -113,17 +144,49 @@ export default function WriterEditor({ value = '', onChange, onFirstInput, block
         file_picker_callback: (callback) => pickImage(callback),
         automatic_uploads: false,
         paste_data_images: !blockPaste,
-        browser_spellcheck: true,
-        contextmenu: 'link image table',
-        statusbar: true,
+        browser_spellcheck: !reference,
+        contextmenu: reference ? false : 'link image table',
+        statusbar: !reference,
         elementpath: false,
-        resize: true,
+        resize: !reference,
+        object_resizing: !reference,
+        table_resize_bars: !reference,
         setup: (ed) => {
           if (blockPaste) {
             ed.on('paste drop', (e) => { e.preventDefault(); ed.notificationManager.open({ text: 'Copy-paste बंद आहे — स्वतः टाइप करा.', type: 'warning', timeout: 2000 }); });
           }
+          if (reference) {
+            // बदल अडवा — फक्त पाहणे / कर्सर फिरवणे / निवडणे
+            const block = (e) => { e.preventDefault(); e.stopImmediatePropagation?.(); };
+            ed.on('beforeinput paste drop cut dragstart', block);
+            ed.on('keydown', (e) => {
+              const copyish = (e.ctrlKey || e.metaKey) && ['c', 'a', 'f'].includes(String(e.key).toLowerCase());
+              if (!NAV_KEYS.includes(e.key) && !copyish) block(e);
+            });
+            ed.on('BeforeExecCommand', (e) => {
+              if (!/^(mceFocus|SelectAll|copy|mceSearchReplace|mceVisualBlocks|mceVisualChars)$/i.test(e.command)) e.preventDefault();
+            });
+            ed.on('NodeChange', () => setFmt(readFormat(ed)));
+          }
         },
       }}
     />
+  );
+  if (!reference) return editor;
+  return (
+    <div className="writer-ref">
+      <div className="fmt-bar">
+        {fmt ? (
+          <>
+            <span>🔍 <b>{fmt.font}</b></span><span><b>{fmt.size}</b></span>
+            {fmt.bold && <span className="on"><b>Bold</b></span>}{fmt.italic && <span className="on"><i>Italic</i></span>}
+            {fmt.underline && <span className="on"><u>Underline</u></span>}{fmt.strike && <span className="on"><s>Strike</s></span>}
+            <span>{fmt.align}</span><span>{fmt.block}</span>
+            <span><i className="sw" style={{ background: fmt.color }} /> {fmt.color}</span>
+          </>
+        ) : <span>👆 नमुन्यातील कोणत्याही मजकुरावर क्लिक करा — त्याचा Font, Size, Bold/Italic/Underline, Alignment इथे व वरच्या toolbar मध्ये दिसेल.</span>}
+      </div>
+      {editor}
+    </div>
   );
 }

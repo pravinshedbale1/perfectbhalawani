@@ -109,7 +109,7 @@ function SlideShow({ images, start = 0, onClose }) {
 }
 
 // ---------------- संपादक ----------------
-export default function ImpressEditor({ json, onChange, onFirstInput, height = 620 }) {
+export default function ImpressEditor({ json, onChange, onFirstInput, height = 620, readOnly }) {
   const host = useRef(null);
   const el = useRef(null);
   const cv = useRef(null);
@@ -128,6 +128,7 @@ export default function ImpressEditor({ json, onChange, onFirstInput, height = 6
   const rerender = () => force((x) => x + 1);
 
   const emit = useCallback(() => {
+    if (readOnly) return;
     if (!changed.current) { changed.current = true; cb.current.onFirstInput?.(); }
     cb.current.onChange?.(JSON.stringify(deck.current));
   }, []);
@@ -173,6 +174,10 @@ export default function ImpressEditor({ json, onChange, onFirstInput, height = 6
     c.discardActiveObject();
     await c.loadFromJSON(s.json || { objects: [] });
     c.backgroundColor = s.bg || '#ffffff';
+    if (readOnly) {
+      c.selection = false;
+      c.getObjects().forEach((o) => o.set({ lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true, hasControls: false, editable: false, hoverCursor: 'pointer' }));
+    }
     c.renderAll();
     hist.current.lock = false;
     pushHist();
@@ -208,7 +213,7 @@ export default function ImpressEditor({ json, onChange, onFirstInput, height = 6
     ro.observe(host.current);
     (async () => {
       // पहिला slide जतन नसल्यास Title layout
-      if (!d.slides[0].json) {
+      if (!d.slides[0].json && !readOnly) {
         c.add(...layoutObjects('title', THEMES[0]));
         d.slides[0].json = c.toObject(['selectable']);
       }
@@ -226,7 +231,7 @@ export default function ImpressEditor({ json, onChange, onFirstInput, height = 6
       const c = cv.current;
       if (!c || !host.current?.contains(document.activeElement) && document.activeElement !== document.body) return;
       const a = c.getActiveObject();
-      if (a?.isEditing) return;
+      if (a?.isEditing || readOnly) return;
       if ((e.key === 'Delete' || e.key === 'Backspace') && a) { e.preventDefault(); removeSel(); }
       else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
       else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
@@ -394,6 +399,34 @@ export default function ImpressEditor({ json, onChange, onFirstInput, height = 6
 
   return (
     <div className="imp" style={{ height }}>
+      {readOnly ? (
+        <div className="imp-ribbon ro">
+          {sel ? (
+            <>
+              <span>🔍 निवडलेला घटक:</span>
+              {isText ? (
+                <>
+                  <span className="chip"><b>{sel.fontFamily}</b></span>
+                  <span className="chip"><b>{Math.round(sel.fontSize * (sel.scaleY || 1))}</b> size</span>
+                  {sel.fontWeight === 'bold' && <span className="chip on"><b>Bold</b></span>}
+                  {sel.fontStyle === 'italic' && <span className="chip on"><i>Italic</i></span>}
+                  {sel.underline && <span className="chip on"><u>Underline</u></span>}
+                  <span className="chip">Align: {sel.textAlign}</span>
+                  <span className="chip"><i className="sw" style={{ background: sel.fill }} /> अक्षर रंग {String(sel.fill)}</span>
+                </>
+              ) : (
+                <>
+                  <span className="chip">{({ rect: 'Rectangle', circle: 'Circle', ellipse: 'Oval', triangle: 'Triangle', line: 'Line', polygon: 'Shape', image: 'Picture' })[String(sel.type).toLowerCase()] || sel.type}</span>
+                  {typeof sel.fill === 'string' && sel.fill && <span className="chip"><i className="sw" style={{ background: sel.fill }} /> Fill {sel.fill}</span>}
+                  {sel.stroke && sel.strokeWidth > 0 && <span className="chip">Outline {sel.stroke} · {sel.strokeWidth}px</span>}
+                </>
+              )}
+            </>
+          ) : <span>👆 slide मधील text / आकारावर क्लिक करा — त्याचा Font, Size, रंग, Bold इ. इथे दिसेल. Slide background: <i className="sw" style={{ background: deck.current?.slides[cur.current]?.bg }} /> {deck.current?.slides[cur.current]?.bg}</span>}
+          <span style={{ flex: 1 }} />
+          <button onClick={() => present(cur.current)}>▶ Slide Show</button>
+        </div>
+      ) : (<>
       <div className="imp-tabs">
         {[['home', 'Home'], ['insert', 'Insert'], ['design', 'Design'], ['show', 'Slide Show']].map(([k, l]) => (
           <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
@@ -467,6 +500,7 @@ export default function ImpressEditor({ json, onChange, onFirstInput, height = 6
           </>
         )}
       </div>
+      </>)}
       <div className="imp-main">
         <div className="imp-thumbs">
           {Array.from({ length: n }, (_, i) => (
@@ -474,15 +508,15 @@ export default function ImpressEditor({ json, onChange, onFirstInput, height = 6
               <span>{i + 1}</span>{thumbs[i] ? <img src={thumbs[i]} alt="" /> : <div className="ph" />}
             </div>
           ))}
-          <div className="imp-thumb-act">
+          {!readOnly && <div className="imp-thumb-act">
             <button onClick={() => addSlide('content')} title="New slide">＋</button>
             <button onClick={() => moveSlide(-1)} title="Move up">▲</button>
             <button onClick={() => moveSlide(1)} title="Move down">▼</button>
-          </div>
+          </div>}
         </div>
         <div className="imp-stage" ref={host}>
           <div className="imp-canvas"><canvas ref={el} /></div>
-          <div className="small muted imp-hint">Slide {cur.current + 1} / {n} · मजकूर बदलण्यासाठी text box वर double-click करा · Delete = काढा · Ctrl+Z = Undo</div>
+          <div className="small muted imp-hint">Slide {cur.current + 1} / {n}{readOnly ? ' · नमुना (फक्त पाहण्यासाठी)' : ' · मजकूर बदलण्यासाठी text box वर double-click करा · Delete = काढा · Ctrl+Z = Undo'}</div>
         </div>
       </div>
       {show && <SlideShow images={show.imgs} start={show.from} onClose={() => setShow(null)} />}

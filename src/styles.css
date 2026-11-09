@@ -661,3 +661,12 @@ table.metrics td { padding: 5px 8px; border-bottom: 1px solid var(--line); font-
 .imp-show-bar button { background: rgba(255,255,255,.15); color: #fff; border: 0; border-radius: 5px; padding: 4px 10px; cursor: pointer; }
 .desk-work .imp { border: 0; }
 @media (max-width: 900px) { .split-desk.office { grid-template-columns: 1fr; } .imp-main { grid-template-columns: 90px 1fr; } }
+/* संदर्भ (फक्त पाहण्यासाठी) — formatting माहिती */
+.writer-ref { display: flex; flex-direction: column; background: #fff; border-radius: 6px; overflow: hidden; }
+.fmt-bar, .imp-ribbon.ro { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 7px 10px; background: #fffbea; border-bottom: 1px solid #f1dc9a; font-size: 13px; color: #3f2d1c; min-height: 38px; }
+.fmt-bar span, .imp-ribbon.ro .chip { background: #fff; border: 1px solid #e8d9a8; border-radius: 6px; padding: 2px 8px; }
+.fmt-bar > span:only-child { background: none; border: 0; padding: 0; }
+.fmt-bar span.on, .imp-ribbon.ro .chip.on { background: #fde68a; border-color: #d4a514; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid #999; vertical-align: -1px; }
+.desk-ref .imp { height: 100% !important; }
+.calc-ref { background: #fff; border-radius: 6px; }

@@ -3,7 +3,7 @@ import Shell, { ResultCard, useClock, useFinish } from './Shell';
 import SampleView from '../SampleView';
 import WriterEditor from '../office/WriterEditor';
 import CalcEditor from '../office/CalcEditor';
-import ImpressEditor, { ImpressViewer } from '../office/ImpressEditor';
+import ImpressEditor from '../office/ImpressEditor';
 import { compareFormatting, compareWords, htmlText, words, wpmOf, fmtClock } from '../../lib/practice';
 import { compareCalc, compareDeck, compareCalcSample, compareDeckSample, parseDeck } from '../../lib/office';
 
@@ -11,9 +11,11 @@ const MAX_BYTES = 850 * 1024;
 const size = (s) => new Blob([s || '']).size;
 
 // संदर्भ (डावीकडे): तयार file असल्यास तीच (फक्त पाहण्यासाठी), नाहीतर नमुना (HTML)
-export function OfficeReference({ ex, height }) {
-  if (ex.kind === 'calc' && ex.refBook) return <CalcEditor json={ex.refBook} readOnly height={height} />;
-  if (ex.kind === 'impress' && parseDeck(ex.refDeck).slides.length) return <ImpressViewer json={ex.refDeck} width={420} />;
+// संदर्भ (डावीकडे) = त्याच प्रकारचा संपादक, फक्त पाहण्यासाठी: क्लिक केल्यावर font / size / formatting दिसते
+export function OfficeReference({ ex, height = 'calc(100vh - 130px)' }) {
+  if (ex.kind === 'calc' && ex.refBook) return <CalcEditor json={ex.refBook} readOnly reference height={height} />;
+  if (ex.kind === 'impress' && parseDeck(ex.refDeck).slides.length) return <ImpressEditor json={ex.refDeck} readOnly height={height} />;
+  if ((ex.kind === 'writer' || ex.kind === 'letter') && ex.sampleHtml) return <WriterEditor value={ex.sampleHtml} reference height={height} />;
   return ex.sampleHtml ? <SampleView html={ex.sampleHtml} /> : <p className="small muted" style={{ color: '#fff' }}>या सरावासाठी नमुना नाही — उजवीकडील सूचनांप्रमाणे काम करा.</p>;
 }
 
