@@ -49,7 +49,7 @@ export default function BulkImport({ batches, students, onClose, onDone }) {
         touched.add(r.data.batchId);
         ok++;
       } catch (e) {
-        next[idx] = { ...r, fail: authErrorMr(e) };
+        next[idx] = { ...r, fail: authErrorMr(e), failEn: e.code || e.message };
         fail++;
         if (String(e.code).includes('too-many-requests') || String(e.code).includes('quota')) {
           next[idx].fail += ' — Firebase मर्यादा; थोड्या वेळाने उर्वरितांसाठी पुन्हा चालवा.';
@@ -120,9 +120,9 @@ export default function BulkImport({ batches, students, onClose, onDone }) {
                     <td className="small">
                       {r.loginId ? <span className="badge ok">✓ {r.loginId}</span>
                         : r.fail ? <span className="badge bad">✗ {r.fail}</span>
-                        : r.errors.length ? <span style={{ color: 'var(--bad)' }}>✗ {r.errors.join(', ')}</span>
+                        : r.errors.length ? <span style={{ color: 'var(--bad)' }}>✗ {r.errors.map((x) => x.mr).join(', ')}</span>
                         : <span className="badge info">तयार</span>}
-                      {r.warnings.length > 0 && <div style={{ color: 'var(--warn)' }}>⚠ {r.warnings.join(', ')}</div>}
+                      {r.warnings.length > 0 && <div style={{ color: 'var(--warn)' }}>⚠ {r.warnings.map((x) => x.mr).join(', ')}</div>}
                     </td>
                   </tr>
                 ))}
