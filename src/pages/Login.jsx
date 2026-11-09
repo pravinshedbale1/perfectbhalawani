@@ -10,6 +10,7 @@ export default function Login() {
   const [pw, setPw] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [show, setShow] = useState(false);
   const auth = useAuth();
   const nav = useNavigate();
 
@@ -35,7 +36,7 @@ export default function Login() {
   const noRole = auth.user && !auth.loading && !auth.role;
 
   return (
-    <div className="page">
+    <div className="login-page">
       <div className="login-wrap">
         <div className="login-side">
           <h2>ऑनलाइन शिक्षण पोर्टल</h2>
@@ -49,7 +50,9 @@ export default function Login() {
           <p className="small" style={{ color: '#a9bdd8' }}>Student ID व पासवर्ड संस्थेकडून प्रवेशाच्या वेळी दिला जातो.</p>
         </div>
         <form className="login-form" onSubmit={submit}>
-          <div className="tabs">
+          <h2>लॉगिन</h2>
+          <p className="muted small" style={{ margin: 0 }}>{mode === 'student' ? 'तुमचा Student ID व पासवर्ड वापरा.' : 'संस्थेचे Admin खाते.'}</p>
+          <div className="tabs" role="tablist">
             <button type="button" className={mode === 'student' ? 'on' : ''} onClick={() => { setMode('student'); setErr(''); }}>👨‍🎓 विद्यार्थी</button>
             <button type="button" className={mode === 'admin' ? 'on' : ''} onClick={() => { setMode('admin'); setErr(''); }}>🔐 Admin</button>
           </div>
@@ -66,7 +69,10 @@ export default function Login() {
             </>
           )}
           <label className="req">पासवर्ड</label>
-          <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} required />
+          <div className="pw-field">
+            <input type={show ? 'text' : 'password'} value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" required />
+            <button type="button" onClick={() => setShow(!show)}>{show ? 'लपवा' : 'दाखवा'}</button>
+          </div>
           <Alert>{err}</Alert>
           <button className="btn block mt" disabled={busy}>{busy ? 'कृपया थांबा…' : 'लॉगिन करा'}</button>
           {mode === 'student' && <p className="small muted mt">पासवर्ड विसरलात? कृपया संस्थेशी संपर्क साधा.</p>}
