@@ -327,6 +327,41 @@ tr.me td { background: #fff6ec !important; font-weight: 700; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .empty { text-align: center; color: var(--muted); padding: 36px 10px; background: #fff; border: 1px dashed var(--line); border-radius: var(--radius); }
 
+/* Syllabus editor */
+.seg { display: inline-flex; background: var(--soft); border-radius: 10px; padding: 4px; }
+.seg button { border: 0; background: none; font: inherit; font-weight: 700; color: var(--muted); padding: 7px 14px; border-radius: 8px; cursor: pointer; }
+.seg button.on { background: #fff; color: var(--navy); box-shadow: 0 1px 4px rgba(11, 61, 120, 0.15); }
+.syl { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(0, 1.6fr); gap: 16px; align-items: start; }
+.syl-col { padding: 14px; }
+.syl-col:first-child { position: sticky; top: calc(var(--appbar-h) + 12px); max-height: calc(100vh - var(--appbar-h) - 24px); overflow: auto; }
+.syl-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 2px 4px 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; flex-wrap: wrap; }
+.sortable { display: grid; gap: 6px; }
+.sort-item { border-radius: 10px; transition: opacity 0.12s; }
+.sort-item.dragging { opacity: 0.4; }
+.sort-item.over { box-shadow: 0 -3px 0 var(--saffron); }
+.srow { display: flex; align-items: center; gap: 10px; padding: 10px 10px; background: #fff; border: 1px solid var(--line); border-radius: 10px; }
+.srow.clickable { cursor: pointer; }
+.srow.clickable:hover { border-color: #b9cbe2; }
+.srow.sel { border-color: var(--saffron); background: var(--saffron-light); }
+.srow.drop { outline: 2px dashed var(--ok); background: var(--ok-bg); }
+.srow .grip { cursor: grab; color: #9aabc2; font-weight: 800; letter-spacing: -2px; user-select: none; padding: 0 2px; }
+.srow .sicon { font-size: 22px; flex: none; }
+.srow .snum { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--soft); color: var(--navy); display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+.srow .smain { flex: 1; min-width: 0; }
+.srow .smain b { display: block; overflow: hidden; text-overflow: ellipsis; }
+.srow .sact { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.ord-btn { width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--line); background: #fff; color: var(--navy); cursor: pointer; font-size: 11px; }
+.ord-btn:hover:not(:disabled) { background: var(--soft); }
+.ord-btn:disabled { opacity: 0.3; cursor: default; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; font-weight: 600; background: #fff; }
+.chip input { width: auto; margin: 0; }
+.chip.on { border-color: var(--navy); background: var(--soft); color: var(--navy); }
+.course-mods { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.course-mods li { font-size: 13px; background: var(--soft); color: var(--navy); padding: 2px 9px; border-radius: 99px; }
+.course .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+@media (max-width: 1000px) { .syl { grid-template-columns: 1fr; } .syl-col:first-child { position: static; max-height: none; } }
+
 /* ---------- Receipt (A4 वर 2 पावत्या, प्रत्येकी A5) ---------- */
 .print-toolbar { position: sticky; top: 0; background: var(--navy-dark); color: #fff; padding: 10px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; z-index: 5; }
 .print-toolbar label { color: #fff; margin: 0; display: flex; gap: 6px; align-items: center; font-weight: 500; }

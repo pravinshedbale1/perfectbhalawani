@@ -2,15 +2,15 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCollection } from '../../lib/useData';
 import { saveBatch, removeDoc } from '../../lib/api';
-import { COURSES } from '../../config';
 import { Modal, Spinner, Alert, Field, Empty } from '../../components/ui';
 import { money, fmtDate } from '../../lib/format';
 
-const blank = { name: '', course: '', timing: '', startDate: '', fee: '', teacher: '', active: true };
+const blank = { name: '', course: '', courseId: '', timing: '', startDate: '', fee: '', teacher: '', active: true };
 
 export default function Batches() {
   const batches = useCollection('batches');
   const students = useCollection('students');
+  const courses = useCollection('courses');
   const [edit, setEdit] = useState(null);
   const [err, setErr] = useState('');
 
@@ -19,7 +19,8 @@ export default function Batches() {
   const save = async (e) => {
     e.preventDefault();
     try {
-      await saveBatch({ ...edit, fee: Number(edit.fee || 0) });
+      const c = courses.data.find((x) => x.id === edit.courseId);
+      await saveBatch({ ...edit, course: c ? c.name : edit.course || '', courseId: edit.courseId || '', fee: Number(edit.fee || 0) });
       setEdit(null);
       batches.reload();
     } catch (e2) { setErr(e2.message); }
@@ -71,8 +72,14 @@ export default function Batches() {
             <div className="form-grid">
               <Field label="बॅचचे नाव" required><input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder="उदा. CCC नोव्हेंबर 2026 – सकाळ" required /></Field>
               <Field label="अभ्यासक्रम">
-                <input list="courses" value={edit.course} onChange={(e) => setEdit({ ...edit, course: e.target.value })} />
-                <datalist id="courses">{COURSES.map((c) => <option key={c.name} value={c.name} />)}</datalist>
+                <select value={edit.courseId || ''} onChange={(e) => {
+                  const c = courses.data.find((x) => x.id === e.target.value);
+                  setEdit({ ...edit, courseId: e.target.value, fee: !edit.fee && c?.fee ? c.fee : edit.fee });
+                }}>
+                  <option value="">— निवडा —</option>
+                  {[...courses.data].sort((a, b) => a.order - b.order).map((c) => <option key={c.id} value={c.id}>{c.icon} {c.title}</option>)}
+                </select>
+                {!courses.data.length && <small className="muted">"अभ्यासक्रम व सराव" → अभ्यासक्रम टॅबमध्ये आधी जोडा.</small>}
               </Field>
               <Field label="वेळ"><input value={edit.timing} onChange={(e) => setEdit({ ...edit, timing: e.target.value })} placeholder="उदा. सकाळी 8 ते 9" /></Field>
               <Field label="सुरुवात दिनांक"><input type="date" value={edit.startDate} onChange={(e) => setEdit({ ...edit, startDate: e.target.value })} /></Field>

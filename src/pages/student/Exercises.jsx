@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../lib/auth';
 import { useCollection } from '../../lib/useData';
-import { submitExercise, MAX_UPLOAD_MB, ALLOWED_EXT, driveConfigured } from '../../lib/api';
+import { submitExercise, MAX_UPLOAD_MB, ALLOWED_EXT, driveConfigured, moduleVisibleTo } from '../../lib/api';
 import { Spinner, StatusBadge, Alert, Empty } from '../../components/ui';
 import { fmtDateTime } from '../../lib/format';
 
@@ -16,7 +16,7 @@ export default function StudentExercises() {
   const [ex, setEx] = useState(null);
 
   if (modules.loading || exercises.loading || subs.loading) return <Spinner />;
-  const mods = modules.data.filter((m) => m.active !== false).sort(byOrder);
+  const mods = modules.data.filter((m) => moduleVisibleTo(m, s.courseId)).sort(byOrder);
   const exOf = (mid) => exercises.data.filter((x) => x.moduleId === mid && x.active !== false).sort(byOrder);
   const subOf = (eid) => subs.data.find((x) => x.exerciseId === eid);
 
@@ -99,6 +99,7 @@ function ExerciseDetail({ ex, module, sub, student, onBack, onDone }) {
           {ex.target && (<><h3>सराव मजकूर</h3><div className="target-box">{ex.target}</div></>)}
           {ex.steps?.length > 0 && (<><h3 className="mt">पायऱ्या</h3><ol className="steps">{ex.steps.map((st, i) => <li key={i}>{st}</li>)}</ol></>)}
           {ex.skills && <p className="small"><b>कौशल्ये:</b> {ex.skills}</p>}
+          {ex.resourceUrl && <a className="btn light sm" href={ex.resourceUrl} target="_blank" rel="noreferrer">🔗 संदर्भ / नमुना पहा</a>}
         </div>
         <div>
           <div className="card">

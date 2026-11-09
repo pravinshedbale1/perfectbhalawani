@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { useCollection, useDocument } from '../../lib/useData';
 import { money, fmtDate, byTimeDesc } from '../../lib/format';
+import { moduleVisibleTo } from '../../lib/api';
 import { Spinner } from '../../components/ui';
 
 export default function StudentHome() {
@@ -9,10 +10,12 @@ export default function StudentHome() {
   const subs = useCollection('submissions', [['studentId', '==', s.id]]);
   const pays = useCollection('payments', [['studentId', '==', s.id]]);
   const exercises = useCollection('exercises');
+  const modules = useCollection('modules');
   const board = useDocument('leaderboards', s.batchId);
 
-  if (subs.loading || exercises.loading) return <Spinner />;
-  const activeEx = exercises.data.filter((x) => x.active !== false);
+  if (subs.loading || exercises.loading || modules.loading) return <Spinner />;
+  const visibleMods = new Set(modules.data.filter((m) => moduleVisibleTo(m, s.courseId)).map((m) => m.id));
+  const activeEx = exercises.data.filter((x) => x.active !== false && visibleMods.has(x.moduleId));
   const evald = subs.data.filter((x) => x.status === 'evaluated');
   const total = evald.reduce((a, x) => a + Number(x.marks || 0), 0);
   const max = evald.reduce((a, x) => a + Number(x.maxMarks || 0), 0);

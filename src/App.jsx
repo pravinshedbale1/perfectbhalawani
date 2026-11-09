@@ -27,7 +27,7 @@ const adminLinks = [
   { to: '/admin/batches', icon: '🗂️', label: 'बॅच' },
   { to: '/admin/students', icon: '👨‍🎓', label: 'विद्यार्थी' },
   { to: '/admin/fees', icon: '💰', label: 'फी व पावती' },
-  { to: '/admin/exercises', icon: '📚', label: 'मॉड्यूल व सराव' },
+  { to: '/admin/exercises', icon: '📚', label: 'अभ्यासक्रम व सराव' },
   { to: '/admin/submissions', icon: '📝', label: 'मूल्यांकन' },
   { to: '/admin/leaderboard', icon: '🏆', label: 'लीडरबोर्ड' },
   { to: '/admin/notices', icon: '📢', label: 'सूचना फलक' },

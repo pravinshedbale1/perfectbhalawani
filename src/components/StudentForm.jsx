@@ -33,7 +33,7 @@ export default function StudentForm({ student, batches, onClose, onSaved, defaul
     const password = pw || DEFAULT_STUDENT_PASSWORD;
     if (isNew && password.length < 6) return setErr('पासवर्ड किमान 6 अक्षरांचा हवा.');
     const { id, createdAt, updatedAt, paidTotal, regNo, loginId, loginEmail, active, ...rest } = f;
-    const data = { ...rest, name: f.name.trim(), batchName: b.name, course: b.course || '', totalFee: Number(f.totalFee || 0) };
+    const data = { ...rest, name: f.name.trim(), batchName: b.name, course: b.course || '', courseId: b.courseId || '', totalFee: Number(f.totalFee || 0) };
     setBusy(true);
     try {
       if (isNew) {

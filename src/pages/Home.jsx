@@ -1,13 +1,32 @@
+import { useEffect, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase';
 import { CENTER, COURSES } from '../config';
-import { SEED_MODULES } from '../seed/modules';
 import { fmtDate, toDate } from '../lib/format';
 
-const exerciseCount = SEED_MODULES.reduce((a, m) => a + m.exercises.length, 0);
+const byOrder = (a, b) => Number(a.order || 0) - Number(b.order || 0);
+
+// अभ्यासक्रम व मॉड्यूल्स Firestore मधून (Admin → अभ्यासक्रम व सराव); नसल्यास config मधील यादी
+function useSyllabus() {
+  const [state, setState] = useState({ courses: null, modules: [] });
+  useEffect(() => {
+    Promise.all([getDocs(collection(db, 'courses')), getDocs(collection(db, 'modules'))])
+      .then(([c, m]) => setState({
+        courses: c.docs.map((d) => ({ id: d.id, ...d.data() })).filter((x) => x.active !== false && x.showOnHome !== false).sort(byOrder),
+        modules: m.docs.map((d) => ({ id: d.id, ...d.data() })).filter((x) => x.active !== false).sort(byOrder),
+      }))
+      .catch(() => setState({ courses: [], modules: [] }));
+  }, []);
+  const fallback = COURSES.map((c) => ({ id: c.name, name: c.name, title: c.mr, icon: c.icon, desc: c.desc }));
+  return { courses: state.courses?.length ? state.courses : state.courses ? fallback : null, modules: state.modules };
+}
 
 export default function Home() {
   const { notices } = useOutletContext() || {};
   const isNew = (n) => Date.now() - (toDate(n.createdAt)?.getTime() || 0) < 7 * 864e5;
+  const { courses, modules } = useSyllabus();
+  const modsFor = (c) => modules.filter((m) => m.courseIds?.includes(c.id));
 
   return (
     <>
@@ -40,9 +59,9 @@ export default function Home() {
 
       <section className="stats-strip">
         <div className="wrap">
-          <div className="it"><b>{COURSES.length}</b><span>अभ्यासक्रम</span></div>
-          <div className="it"><b>{SEED_MODULES.length}</b><span>प्रशिक्षण मॉड्यूल्स</span></div>
-          <div className="it"><b>{exerciseCount}+</b><span>प्रात्यक्षिक सराव</span></div>
+          <div className="it"><b>{courses ? courses.length : '…'}</b><span>अभ्यासक्रम</span></div>
+          <div className="it"><b>{modules.length || '…'}</b><span>प्रशिक्षण मॉड्यूल्स</span></div>
+          <div className="it"><b>100%</b><span>प्रात्यक्षिक शिक्षण</span></div>
           <div className="it"><b>मराठी</b><span>माध्यमातून शिक्षण</span></div>
         </div>
       </section>
@@ -52,13 +71,23 @@ export default function Home() {
           <div>
             <div className="section-title" id="courses"><h2>अभ्यासक्रम</h2></div>
             <div className="grid g2 courses-grid">
-              {COURSES.map((c) => (
-                <div key={c.name} className="card accent course">
-                  <div className="icon">{c.icon}</div>
-                  <h3>{c.mr}</h3>
-                  <p>{c.desc}</p>
-                </div>
-              ))}
+              {(courses || []).map((c) => {
+                const mods = modsFor(c);
+                return (
+                  <div key={c.id} className="card accent course">
+                    <div className="icon">{c.icon}</div>
+                    <h3>{c.title}</h3>
+                    <p>{c.desc}</p>
+                    {c.duration && <div className="meta"><span className="badge info">⏱ {c.duration}</span></div>}
+                    {mods.length > 0 && (
+                      <ul className="course-mods">
+                        {mods.slice(0, 6).map((m) => <li key={m.id}>{m.title}</li>)}
+                        {mods.length > 6 && <li>+{mods.length - 6} अधिक</li>}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <div className="section-title" id="admission"><h2>प्रवेश प्रक्रिया</h2></div>

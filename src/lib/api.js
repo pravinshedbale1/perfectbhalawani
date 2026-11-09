@@ -253,6 +253,46 @@ export const saveExercise = (e) =>
 
 export const removeDoc = (col, id) => deleteDoc(doc(db, col, id));
 
+// क्रम बदल — दिलेल्या क्रमाने order = 1..n (फक्त बदललेले docs लिहा)
+export async function saveOrder(col, items) {
+  const b = writeBatch(db);
+  let n = 0;
+  items.forEach((it, i) => {
+    if (Number(it.order) !== i + 1) { b.update(doc(db, col, it.id), { order: i + 1 }); n++; }
+  });
+  if (n) await b.commit();
+}
+
+export const moveExercise = (exId, moduleId, order) => updateDoc(doc(db, 'exercises', exId), { moduleId, order });
+
+export const saveCourse = (c) =>
+  c.id ? updateDoc(doc(db, 'courses', c.id), strip(c)) : addDoc(collection(db, 'courses'), { ...strip(c), createdAt: serverTimestamp() });
+
+export async function seedDefaultCourses(list) {
+  const b = writeBatch(db);
+  list.forEach((c, i) => b.set(doc(collection(db, 'courses')), {
+    name: c.name, title: c.mr, icon: c.icon, desc: c.desc, duration: c.duration || '', fee: 0,
+    order: i + 1, active: true, showOnHome: true, createdAt: serverTimestamp(),
+  }));
+  await b.commit();
+}
+
+// मॉड्यूल त्याच्या सर्व सरावांसह कॉपी
+export async function duplicateModule(m, exercises, order) {
+  const mRef = doc(collection(db, 'modules'));
+  const b = writeBatch(db);
+  b.set(mRef, { ...strip(m), title: m.title + ' (प्रत)', order, active: false, createdAt: serverTimestamp() });
+  exercises.forEach((e) => b.set(doc(collection(db, 'exercises')), { ...strip(e), moduleId: mRef.id, createdAt: serverTimestamp() }));
+  await b.commit();
+}
+
+export const duplicateExercise = (e, order) =>
+  addDoc(collection(db, 'exercises'), { ...strip(e), title: e.title + ' (प्रत)', order, active: false, createdAt: serverTimestamp() });
+
+// विद्यार्थ्याला दिसणारे मॉड्यूल: courseIds रिकामे = सर्वांसाठी
+export const moduleVisibleTo = (m, courseId) =>
+  m.active !== false && (!m.courseIds?.length || !courseId || m.courseIds.includes(courseId));
+
 export const saveBatch = (b) =>
   b.id ? updateDoc(doc(db, 'batches', b.id), strip(b)) : addDoc(collection(db, 'batches'), { ...strip(b), active: true, createdAt: serverTimestamp() });
 
@@ -260,6 +300,6 @@ export const saveNotice = (n) =>
   n.id ? updateDoc(doc(db, 'notices', n.id), strip(n)) : addDoc(collection(db, 'notices'), { ...strip(n), createdAt: serverTimestamp() });
 
 function strip(o) {
-  const { id, ...rest } = o;
+  const { id, createdAt, ...rest } = o;
   return rest;
 }

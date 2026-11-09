@@ -70,8 +70,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // अभ्यासक्रम व मॉड्यूल्सची नावे सार्वजनिक (मुख्यपृष्ठावर अभ्यासक्रम दाखवण्यासाठी)
+    match /courses/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /modules/{id} {
-      allow read: if signedIn();
+      allow read: if true;
       allow write: if isAdmin();
     }
 
