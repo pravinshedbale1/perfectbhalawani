@@ -26,7 +26,7 @@ export default function AdminLeaderboard() {
           <select value={batch} onChange={(e) => setParams({ batch: e.target.value })} style={{ width: 'auto' }}>
             {batches.data.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
-          <button className="btn light" onClick={refresh} disabled={!batch || busy}>{busy ? '…' : '🔄 पुन्हा मोजा'}</button>
+          <button className="btn light" onClick={refresh} disabled={!batch || busy}>{busy ? 'Refreshing…' : '🔄 Refresh'}</button>
         </div>
       </div>
       {board.loading ? <Spinner /> : <LeaderboardTable board={board.data} />}
