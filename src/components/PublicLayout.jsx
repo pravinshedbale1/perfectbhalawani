@@ -5,8 +5,8 @@ import { db, isConfigured } from '../firebase';
 import { CENTER } from '../config';
 import { useAuth } from '../lib/auth';
 import { byTimeDesc } from '../lib/format';
+import { PersonIcon } from './ui';
 
-const initial = (s) => String(s).replace(/^(श्री\.|सौ\.|कु\.)\s*/, '').trim().charAt(0);
 
 export function SiteHeader() {
   const { role } = useAuth();
@@ -34,8 +34,8 @@ export function SiteHeader() {
             <div className="tag">{CENTER.tagline} — गुणवत्तापूर्ण संगणक शिक्षण, आपल्या गावात</div>
           </div>
           <div className="head-people">
-            <div className="person"><span className="av">{initial(CENTER.owner)}</span><div><b>{CENTER.owner}</b><small>संचालक</small></div></div>
-            <div className="person f"><span className="av">{initial(CENTER.director)}</span><div><b>{CENTER.director}</b><small>संचालिका</small></div></div>
+            <div className="person"><span className="av"><PersonIcon /></span><div><b>{CENTER.owner}</b><small>संचालक</small></div></div>
+            <div className="person f"><span className="av"><PersonIcon /></span><div><b>{CENTER.director}</b><small>संचालिका</small></div></div>
           </div>
         </div>
       </header>

@@ -33,13 +33,13 @@ export default function Login() {
           <div style={{ fontSize: 40 }}>🔐</div>
           <h2 style={{ color: 'var(--navy)' }}>तुम्ही आधीच लॉगिन आहात</h2>
           <p className="muted">या ब्राउझरमध्ये सध्या <b>{who}</b> म्हणून लॉगिन आहे.
-            {mode === 'student' ? ' विद्यार्थी म्हणून लॉगिन करण्यासाठी आधी बाहेर पडा.' : ' Admin म्हणून लॉगिन करण्यासाठी आधी बाहेर पडा.'}</p>
+            {mode === 'student' ? ' विद्यार्थी म्हणून लॉगिन करण्यासाठी आधी Log Out करा.' : ' Admin म्हणून लॉगिन करण्यासाठी आधी Log Out करा.'}</p>
           <div className="row" style={{ justifyContent: 'center' }}>
             <button className="btn light" onClick={() => nav(otherRole === 'admin' ? '/admin' : '/student')}>
               {otherRole === 'admin' ? 'Admin डॅशबोर्ड' : 'माझे डॅशबोर्ड'} →
             </button>
             <button className="btn saffron" onClick={() => auth.logout()}>
-              बाहेर पडा व {mode === 'student' ? 'विद्यार्थी' : 'Admin'} लॉगिन करा
+              Log Out करून {mode === 'student' ? 'विद्यार्थी' : 'Admin'} लॉगिन करा
             </button>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function Login() {
             <button type="button" className={mode === 'student' ? 'on' : ''} onClick={() => { setMode('student'); setErr(''); }}>👨‍🎓 विद्यार्थी</button>
             <button type="button" className={mode === 'admin' ? 'on' : ''} onClick={() => { setMode('admin'); setErr(''); }}>🔐 Admin</button>
           </div>
-          {noRole && <Alert>हे खाते कोणत्याही विद्यार्थी/Admin शी जोडलेले नाही. <a href="#" onClick={(e) => { e.preventDefault(); auth.logout(); }}>बाहेर पडा</a></Alert>}
+          {noRole && <Alert>हे खाते कोणत्याही विद्यार्थी/Admin शी जोडलेले नाही. <a href="#" onClick={(e) => { e.preventDefault(); auth.logout(); }}>Log Out</a></Alert>}
           {mode === 'student' ? (
             <>
               <label className="req">Student ID</label>

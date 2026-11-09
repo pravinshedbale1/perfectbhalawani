@@ -40,3 +40,11 @@ export function StatusBadge({ status }) {
   if (status === 'redo') return <span className="badge bad">पुन्हा सादर करा</span>;
   return <span className="badge info">सादर नाही</span>;
 }
+
+// व्यक्ती आयकॉन (आद्याक्षराऐवजी)
+export const PersonIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <circle cx="12" cy="8" r="4.2" />
+    <path d="M3.5 20.2c0-4.1 3.8-6.7 8.5-6.7s8.5 2.6 8.5 6.7c0 .5-.4.8-.9.8H4.4c-.5 0-.9-.3-.9-.8z" />
+  </svg>
+);

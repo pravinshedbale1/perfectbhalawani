@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, Navigate, Link, useLocation } from 'react-router-dom';
 import { SiteHeader } from './PublicLayout';
 import { useAuth } from '../lib/auth';
-import { Spinner } from './ui';
+import { Spinner, PersonIcon } from './ui';
 import { CENTER } from '../config';
 
 export default function DashLayout({ role, links }) {
@@ -44,7 +44,8 @@ export default function DashLayout({ role, links }) {
           <span className="spacer" />
           <div className="user">
             <div className="nm" style={{ textAlign: 'right' }}><b>{name}</b><small>{sub}</small></div>
-            <span className="av">{name.trim().charAt(0).toUpperCase()}</span>
+            <span className="av"><PersonIcon /></span>
+            <button className="btn sm light logout-btn" onClick={() => auth.logout()}>⎋ Log Out</button>
           </div>
         </div>
       </header>
@@ -58,7 +59,7 @@ export default function DashLayout({ role, links }) {
           ))}
           <div className="bottom-links">
             <Link to="/"><span className="ic">🌐</span> मुख्य संकेतस्थळ</Link>
-            <a href="#" onClick={(e) => { e.preventDefault(); auth.logout(); }}><span className="ic">🚪</span> बाहेर पडा</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); auth.logout(); }}><span className="ic">🚪</span> Log Out</a>
           </div>
         </aside>
         <div className={'scrim' + (open ? ' open' : '')} onClick={() => setOpen(false)} />
