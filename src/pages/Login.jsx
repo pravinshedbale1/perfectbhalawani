@@ -14,10 +14,38 @@ export default function Login() {
   const auth = useAuth();
   const nav = useNavigate();
 
+  // "विद्यार्थी लॉगिन" / "Admin लॉगिन" लिंकनुसार टॅब बदला
+  const wantAdmin = !!params.get('admin');
+  useEffect(() => { setMode(wantAdmin ? 'admin' : 'student'); setErr(''); }, [wantAdmin]);
+
+  // आधीच त्याच प्रकारच्या खात्याने लॉगिन असल्यासच डॅशबोर्डवर पाठवा
   useEffect(() => {
-    if (auth.role === 'admin') nav('/admin', { replace: true });
-    if (auth.role === 'student') nav('/student', { replace: true });
-  }, [auth.role, nav]);
+    if (auth.role && auth.role === mode) nav(auth.role === 'admin' ? '/admin' : '/student', { replace: true });
+  }, [auth.role, mode, nav]);
+
+  // दुसऱ्या प्रकारच्या खात्याने लॉगिन असल्यास: सूचना दाखवा
+  const otherRole = auth.role && auth.role !== mode ? auth.role : null;
+  if (otherRole) {
+    const who = otherRole === 'admin' ? 'Admin' : `विद्यार्थी (${auth.profile?.loginId || ''})`;
+    return (
+      <div className="login-page">
+        <div className="card" style={{ maxWidth: 520, width: '100%', textAlign: 'center' }}>
+          <div style={{ fontSize: 40 }}>🔐</div>
+          <h2 style={{ color: 'var(--navy)' }}>तुम्ही आधीच लॉगिन आहात</h2>
+          <p className="muted">या ब्राउझरमध्ये सध्या <b>{who}</b> म्हणून लॉगिन आहे.
+            {mode === 'student' ? ' विद्यार्थी म्हणून लॉगिन करण्यासाठी आधी बाहेर पडा.' : ' Admin म्हणून लॉगिन करण्यासाठी आधी बाहेर पडा.'}</p>
+          <div className="row" style={{ justifyContent: 'center' }}>
+            <button className="btn light" onClick={() => nav(otherRole === 'admin' ? '/admin' : '/student')}>
+              {otherRole === 'admin' ? 'Admin डॅशबोर्ड' : 'माझे डॅशबोर्ड'} →
+            </button>
+            <button className="btn saffron" onClick={() => auth.logout()}>
+              बाहेर पडा व {mode === 'student' ? 'विद्यार्थी' : 'Admin'} लॉगिन करा
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const submit = async (e) => {
     e.preventDefault();
