@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useCollection, useDocument } from '../../lib/useData';
+import { useCollection, useBoard } from '../../lib/useData';
 import { recomputeLeaderboard } from '../../lib/api';
 import LeaderboardTable from '../../components/LeaderboardTable';
 import { Spinner } from '../../components/ui';
@@ -9,13 +9,19 @@ export default function AdminLeaderboard() {
   const [params, setParams] = useSearchParams();
   const batches = useCollection('batches');
   const batch = params.get('batch') || batches.data.find((b) => b.active !== false)?.id || '';
-  const board = useDocument('leaderboards', batch);
+  const board = useBoard(batch);
   const [busy, setBusy] = useState(false);
 
   const refresh = async () => {
     setBusy(true);
     try { await recomputeLeaderboard(batch); await board.reload(); } finally { setBusy(false); }
   };
+
+  // थेट लीडरबोर्डच्या ओळी अजून नसल्यास (पहिल्यांदा) आपोआप तयार करा
+  useEffect(() => {
+    if (batch && !board.loading && !board.data.rows.length && !busy) refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batch, board.loading]);
 
   if (batches.loading) return <Spinner />;
   return (

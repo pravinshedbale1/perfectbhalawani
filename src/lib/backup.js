@@ -12,6 +12,7 @@ export const BACKUP_COLLECTIONS = [
   ['payments', 'फी पावत्या'],
   ['submissions', 'सादर सराव व गुण'],
   ['leaderboards', 'लीडरबोर्ड'],
+  ['boardRows', 'लीडरबोर्ड ओळी'],
   ['notices', 'सूचना'],
   ['counters', 'क्रमांक'],
   ['admins', 'Admin'],

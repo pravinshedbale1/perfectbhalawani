@@ -50,3 +50,13 @@ export function useDocument(path, id) {
   useEffect(() => { load(); }, [load]);
   return { data, loading, reload: load };
 }
+
+// बॅचचा थेट लीडरबोर्ड (boardRows) — क्रमांक client-side
+export function useBoard(batchId) {
+  const c = useCollection('boardRows', [['batchId', '==', batchId]]);
+  const list = [...c.data].sort((a, b) => b.total - a.total || b.evaluated - a.evaluated || String(a.name).localeCompare(String(b.name)));
+  let rank = 0, prev = null;
+  const rows = list.map((r, i) => { if (r.total !== prev) { rank = i + 1; prev = r.total; } return { ...r, studentId: r.id, rank }; });
+  const updatedAt = list.reduce((m, r) => { const t = r.updatedAt?.toMillis?.() || 0; return t > m ? t : m; }, 0);
+  return { data: { rows, updatedAt: updatedAt ? new Date(updatedAt) : null }, loading: c.loading, reload: c.reload };
+}

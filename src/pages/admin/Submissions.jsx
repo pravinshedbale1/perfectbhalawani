@@ -92,7 +92,7 @@ export default function Submissions() {
                     ? <>{KINDS[s.kind].icon} {metricsLine(s.kind, s.metrics)}{typeof s.suggestedMarks === 'number' && s.status !== 'evaluated' && <div className="muted">सुचवलेले गुण: {s.suggestedMarks}</div>}</>
                     : s.fileUrl ? <a href={s.fileUrl} target="_blank" rel="noreferrer">📎 उघडा</a> : '-'}</td>
                   <td className="small nowrap">{fmtDateTime(s.submittedAt)}</td>
-                  <td><StatusBadge status={s.status} /></td>
+                  <td><StatusBadge status={s.status} />{s.status === 'evaluated' && s.auto && <div className="small muted">🤖 आपोआप</div>}</td>
                   <td className="num">{s.status === 'evaluated' ? `${s.marks}/${s.maxMarks}` : '-'}</td>
                   <td><button className="btn sm" onClick={() => openEval(s)}>{s.status === 'evaluated' ? 'बदला' : 'तपासा'}</button></td>
                 </tr>

@@ -238,7 +238,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Text select → Font Size → Bold/Italic/Underline → Alignment.",
     "sampleHtml": "<div class=\"a-lab\"><div class=\"page\"><h2>JOB APPLICATION</h2><p>To,<br>The Manager,<br>Perfect Computers, Bhalwani</p><p><b>Subject: Application for Computer Operator</b></p><p>Respected Sir/Madam,<br>I am applying for the post of Computer Operator. I have practical knowledge of Writer, Calc, Impress and Internet.</p><p>Thank you.</p><p>Yours faithfully,<br>Student Name</p></div></div>",
-    "kind": "upload",
+    "kind": "writer",
     "order": 1,
     "maxMarks": 10
    },
@@ -255,7 +255,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Heading select → Size + Bold. Skills select → Bullets. Spacing/alignment तपासा.",
     "sampleHtml": "<div class=\"a-lab\"><div class=\"page\"><h2>RESUME</h2><h3>STUDENT NAME</h3><p><b>Mobile:</b> 9876543210 | <b>Email:</b> student@example.com</p><hr><h3>Career Objective</h3><p>To build practical computer skills and work efficiently in an office environment.</p><h3>Education</h3><p>SSC / HSC / ITI</p><h3>Skills</h3><ul><li>Writer</li><li>Calc</li><li>Internet & Online Forms</li></ul><h3>Personal Details</h3><p>Address: Bhalwani, Pandharpur</p></div></div>",
-    "kind": "upload",
+    "kind": "writer",
     "order": 2,
     "maxMarks": 10
    },
@@ -273,7 +273,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Page Border: Format → Page Style → Borders. Text select → Font Color. Character formatting मधून effects वापरा.",
     "sampleHtml": "<div class=\"a-lab\"><div><div class=\"cert\"><h1 style=\"color:#155b93\">🏆 CERTIFICATE</h1><p>This is to certify that</p><h2>STUDENT NAME</h2><p>has successfully completed the</p><h3>COMPUTER PRACTICAL COURSE</h3><p>Date: ____________</p><br><table><tr><td>Teacher Signature</td><td>Director Signature</td></tr></table></div></div></div>",
-    "kind": "upload",
+    "kind": "writer",
     "order": 3,
     "maxMarks": 10
    },
@@ -292,7 +292,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Heading select → Size + Bold + Font Colour. Page Border: Format → Page Style → Borders. 2–3 रंगांचा संतुलित वापर करा.",
     "sampleHtml": "<div class=\"a-lab\"><div><div class=\"ad\"><div class=\"big\">🎓 COMPUTER CLASS</div><div class=\"offer\">ADMISSION OPEN</div><h3><i>BASIC COMPUTER • OFFICE • INTERNET</i></h3><p><b>Practical Training • Personal Guidance</b></p><p style=\"font-size:25px\"><u>आजच प्रवेश घ्या!</u></p><p><b>PERFECT COMPUTERS, BHALWANI</b></p></div></div></div>",
-    "kind": "upload",
+    "kind": "writer",
     "order": 4,
     "maxMarks": 10
    },
@@ -310,7 +310,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Table: Writer → Table → Insert Table. Image: Insert → Image. Page Border: Format → Page Style → Borders.",
     "sampleHtml": "<div class=\"a-lab\"><div class=\"page\"><h2>APPLICATION FORM</h2><table><tr><td>Full Name</td><td>________________</td><td rowspan=\"4\" style=\"text-align:center\">📷<br><br>PHOTO</td></tr><tr><td>Address</td><td>________________</td></tr><tr><td>Mobile</td><td>________________</td></tr><tr><td>Education</td><td>________________</td></tr><tr><td>Signature</td><td colspan=\"2\">________________</td></tr></table></div></div>",
-    "kind": "upload",
+    "kind": "writer",
     "order": 5,
     "maxMarks": 10
    }
@@ -333,7 +333,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Job Application",
     "sampleHtml": "<div class=\"ready\">\n<div style=\"text-align:right;font-size:11px\">Date: 18/10/2026</div>\n<div style=\"font-family:'Liberation Serif';font-size:13px;line-height:1.5\">\nFrom,<br><b>Anil B. Pawar</b><br>At.Po. Bhalwani, Tal. Pandharpur<br>Dist. Solapur - 413310<br>Mobile: 98XXXX XXXX<br><br>\nTo,<br>The Manager,<br><b>Perfect Computers, Bhalwani</b><br><br>\n<b>Subject: Application for the post of Computer Operator</b><br><br>\nRespected Sir,<br><br>\nI beg to state that I have come to know that there is vacancy of Computer Operator in your esteemed institute. I wish to apply for the same.<br><br>\nI have passed 12th with 78% and completed MS-CIT with 85%. I have good knowledge of LibreOffice Writer, Calc, Impress, Internet and AI Tools. I have typing speed 40 wpm English and 30 wpm Marathi.<br><br>\nKindly give me a chance to work in your institute. I assure you I will work sincerely.<br><br>\nThanking you,<br>Yours faithfully,<br><br><b>(Anil B. Pawar)</b><br>Encl: Resume, Certificates\n</div>\n<div style=\"margin-top:8px;font-size:10px;background:#f1f5f9;padding:6px;border-radius:6px\"><b>LibreOffice Setup:</b> Format > Page > A4, Margins Top 1\" Bottom 1\" Left 1.25\" Right 1\" | Font Liberation Serif 12 | Alignment Justified | Line Spacing 1.15</div>\n</div>",
-    "kind": "upload",
+    "kind": "writer",
     "order": 1,
     "maxMarks": 10
    },
@@ -349,7 +349,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Resume",
     "sampleHtml": "<div class=\"ready\">\n<div style=\"text-align:center\"><div style=\"font-size:18px;font-weight:800;color:#0d1b37\">ANIL B. PAWAR</div><div style=\"font-size:10px\">anil.pawar@email.com | 98XXXX XXXX | At.Po. Bhalwani, Pandharpur</div></div><hr>\n<div style=\"font-size:12px\"><b style=\"color:#0d1b37;text-decoration:underline\">CAREER OBJECTIVE:</b><br>To work as Computer Operator where I can use my MS-CIT and AI skills.<br><br>\n<b style=\"color:#0d1b37;text-decoration:underline\">SKILLS:</b><br>• LibreOffice Writer, Calc, Impress • Internet, Email • Marathi & English Typing • AI Tools ChatGPT<br><br>\n<b style=\"color:#0d1b37;text-decoration:underline\">EDUCATION:</b>\n<table><tr style=\"background:#0d1b37;color:#fff\"><th>Qualification</th><th>Board</th><th>Year</th><th>%</th></tr><tr><td>10th SSC</td><td>Maharashtra Board</td><td>2020</td><td>85.20%</td></tr><tr><td>12th HSC</td><td>Maharashtra Board</td><td>2022</td><td>78.50%</td></tr><tr><td>MS-CIT</td><td>MKCL</td><td>2024</td><td>85%</td></tr></table>\n<br><b>DECLARATION:</b> I hereby declare information is true.<br><br>Date: 18/10/2026 Place: Bhalwani <div style=\"text-align:right\">(Anil B. Pawar)</div></div>\n<div style=\"margin-top:6px;font-size:10px;background:#f1f5f9;padding:6px;border-radius:6px\">Setup: Margins 0.8\" Font Liberation Sans 11 Heading Bold 14 Navy | Table Insert > Table > Borders All 0.5pt</div>\n</div>",
-    "kind": "upload",
+    "kind": "writer",
     "order": 2,
     "maxMarks": 10
    },
@@ -366,7 +366,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Certificate",
     "sampleHtml": "<div class=\"ready\" style=\"background:#fffbeb;border:3px double #d4af37;padding:18px;text-align:center\">\n<div style=\"font-size:11px\">🏫 Perfect Computers, Bhalwani</div><div style=\"font-size:22px;font-weight:900;color:#0d1b37;margin:8px 0;letter-spacing:2px\">CERTIFICATE OF ACHIEVEMENT</div><div style=\"font-size:12px\">This is to certify that</div><div style=\"font-size:18px;font-weight:800;color:#7c3aed;border:1px dashed #7c3aed;display:inline-block;padding:4px 18px;margin:8px 0\">Mr. Anil B. Pawar</div><div style=\"font-size:12px\">has successfully completed <b>MS-CIT Course</b> with <b>A Grade</b> in October 2026.<br>We wish him bright future.</div><div style=\"display:flex;justify-content:space-between;margin-top:20px;font-size:11px\"><div>Date: 18/10/2026<br><b>Director</b></div><div>Place: Bhalwani<br><b>Principal</b></div></div>\n</div><div style=\"font-size:10px;background:#f1f5f9;padding:6px;border-radius:6px\">Setup: Format > Page > Landscape Margins 0.5\" | Borders Double 2.5pt Golden #d4af37 Padding 15pt | Background Light Yellow #fffbeb</div>",
-    "kind": "upload",
+    "kind": "writer",
     "order": 3,
     "maxMarks": 10
    },
@@ -382,7 +382,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Marathi Arj",
     "sampleHtml": "<div class=\"ready\" style=\"font-family:'Noto Sans Devanagari';font-size:13px;line-height:1.6\">\n<div style=\"text-align:right\">दिनांक: १८/१०/२०२६</div>प्रति,<br>मा. मुख्याध्यापक,<br>जि.प. प्रशाला, भाळवणी, ता. पंढरपूर<br><br><b>विषय: शाळा सोडल्याचा दाखला मिळणेबाबत.</b><br><br>महोदय,<br>मी आपल्या शाळेत इयत्ता १० वी मध्ये शिकत होतो. माझे नाव अनिल भाऊ पवार असून माझा रोल नंबर १२३ आहे. मला पुढील शिक्षणासाठी शाळा सोडल्याच्या दाखल्याची आवश्यकता आहे.<br>तरी कृपया मला दाखला मिळावा ही विनंती.<br><br>कळावे,<br>आपला विश्वासू,<br><b>अनिल भाऊ पवार</b><br>इयत्ता: १० वी, रोल: १२३\n<div style=\"margin-top:6px;font-size:10px;background:#f1f5f9;padding:6px;border-radius:6px\">Setup: A4 Margins 1\" Font Lohit Devanagari / Noto Sans Devanagari 14 | Tools > Language > Marathi</div>\n</div>",
-    "kind": "upload",
+    "kind": "writer",
     "order": 4,
     "maxMarks": 10
    }
@@ -405,7 +405,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Farmer Sheet",
     "sampleHtml": "<div class=\"ready\">\n<table><tr style=\"background:#0d1b37;color:#fff\"><th>Farmer Name</th><th>Village</th><th>Crop</th><th>Area (Acre)</th><th>Rate</th><th>Total</th></tr><tr><td>राम पवार</td><td>भाळवणी</td><td>ऊस</td><td>2.5</td><td>3000</td><td>=D2*E2 = 7500</td></tr><tr><td>अनिल मोरे</td><td>गुरसाळे</td><td>गहू</td><td>1.0</td><td>2500</td><td>2500</td></tr><tr><td colspan=5 style=\"text-align:right\"><b>Total</b></td><td><b>=SUM(F2:F16)</b></td></tr><tr><td colspan=5 style=\"text-align:right\"><b>Average</b></td><td><b>=AVERAGE(F2:F16)</b></td></tr></table>\n<div style=\"font-size:10px;background:#f1f5f9;padding:6px;margin-top:6px;border-radius:6px\">Formulas: Total =D2*E2 | SUM =SUM(F2:F16) | AVERAGE =AVERAGE(F2:F16) | MAX =MAX(F2:F16) | Insert 15 records | Header Bold Blue White BG</div>\n</div>",
-    "kind": "upload",
+    "kind": "calc",
     "order": 1,
     "maxMarks": 10
    },
@@ -422,7 +422,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Result Sheet",
     "sampleHtml": "<div class=\"ready\">\n<table><tr style=\"background:#0d1b37;color:#fff\"><th>Roll</th><th>Name</th><th>Marathi</th><th>English</th><th>Math</th><th>Total =SUM</th><th>%</th><th>Grade =IF</th></tr><tr><td>1</td><td>Anil</td><td>78</td><td>82</td><td>85</td><td>=SUM(C2:E2)=245</td><td>=F2/3=81.6</td><td>=IF(G2>=60 \"First\" \"Second\")</td></tr></table>\n<div style=\"font-size:10px;background:#f1f5f9;padding:6px;margin-top:6px;border-radius:6px\">Total =SUM(C2:G2) % =H2/5 Grade =IF(I2>=60 \"First Class\" IF(I2>=35 \"Pass\" \"Fail\")) Rank =RANK(H2,H2:H11) Pass =IF(I2>=35 \"Pass\" \"Fail\")</div>\n</div>",
-    "kind": "upload",
+    "kind": "calc",
     "order": 2,
     "maxMarks": 10
    },
@@ -438,7 +438,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Bill",
     "sampleHtml": "<div class=\"ready\">\n<table><tr style=\"background:#0d1b37;color:#fff\"><th>Item</th><th>Qty</th><th>Rate</th><th>Total =Qty*Rate</th></tr><tr><td>साखर</td><td>2</td><td>45</td><td>=B2*C2=90</td></tr><tr><td>तेल</td><td>1</td><td>120</td><td>120</td></tr><tr><td colspan=3 style=\"text-align:right\"><b>Subtotal</b></td><td>=SUM(D2:D11)</td></tr><tr><td colspan=3 style=\"text-align:right\"><b>GST 18%</b></td><td>=D12*18%</td></tr><tr><td colspan=3 style=\"text-align:right\"><b>Grand Total</b></td><td>=D12+D13</td></tr></table>\n</div>",
-    "kind": "upload",
+    "kind": "calc",
     "order": 3,
     "maxMarks": 10
    },
@@ -454,7 +454,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Chart",
     "sampleHtml": "<div class=\"ready\">\n<b>Data:</b> Crop: ऊस 40%, गहू 25%, ज्वारी 20%, हरभरा 15%<br>\n<b>Steps:</b> Select Crop Area Columns > Insert > Chart > Pie > Title: Crop Distribution > Data Labels % Show<br>\n<div style=\"width:120px;height:120px;border-radius:50%;background:conic-gradient(#2563eb 0% 40%, #10b981 40% 65%, #f59e0b 65% 85%, #ef4444 85% 100%);margin:10px auto\"></div><center style=\"font-size:10px\">ऊस 40% | गहू 25% | ज्वारी 20% | हरभरा 15%</center>\n</div>",
-    "kind": "upload",
+    "kind": "calc",
     "order": 4,
     "maxMarks": 10
    }
@@ -481,7 +481,7 @@ export const SAMPLE_MODULES = [
     ],
     "skills": "Presentation",
     "sampleHtml": "<div class=\"ready\" style=\"font-size:12px\">\n<b>Slide 1:</b> Title - ANNUAL FUNCTION 2026 - Perfect Computers Bhalwani (Logo Center, Background Gradient Blue Purple)<br>\n<b>Slide 2:</b> Chief Guest - Shri. R.K. Pawar Sir, Photo, Designation<br>\n<b>Slide 3:</b> Programs List - Table: Sr.No Program Name Time<br>\n<b>Slide 4-8:</b> Photos of Dance, Speech, Award (Insert Image, Border 2pt Blue, Caption)<br>\n<b>Slide 9:</b> Awards Distribution - Table Student Name Award<br>\n<b>Slide 10:</b> Thank You - Thank You! (WordArt, Animation Appear)<br>\n<b>Setup:</b> View > Master > Master Slide Background | Slide Show > Transition > Morph | Animation > Appear Fade\n</div>",
-    "kind": "upload",
+    "kind": "impress",
     "order": 1,
     "maxMarks": 10
    }

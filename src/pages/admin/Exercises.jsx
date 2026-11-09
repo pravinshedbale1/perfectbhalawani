@@ -199,7 +199,8 @@ function ModulesTab({ courses, modules, exercises }) {
     const { stepsText, ...rest } = eEdit;
     const { mcqText, sheetGrid, ...data } = rest;
     const kind = data.kind || 'upload';
-    if (new Blob([data.sampleHtml || '']).size > 900 * 1024) return setErr('नमुना खूप मोठा आहे (900 KB पेक्षा जास्त). मोठी चित्रे काढून लिंकने जोडा.');
+    delete data._rk;
+    if (new Blob([(data.sampleHtml || '') + (data.refBook || '') + (data.refDeck || '')]).size > 900 * 1024) return setErr('नमुना खूप मोठा आहे (900 KB पेक्षा जास्त). मोठी चित्रे काढून लिंकने जोडा.');
     if ((kind === 'typing' || kind === 'keys') && !String(data.target || '').trim()) return setErr('टाइप करायचा मजकूर आवश्यक आहे.');
     if (kind === 'letter' && !String(data.sampleHtml || '').trim()) return setErr('संदर्भ पत्र आवश्यक आहे.');
     if (kind === 'email' && (!data.email?.to || !data.email?.body)) return setErr('ईमेलचा "Mail to" व मजकूर आवश्यक आहे.');

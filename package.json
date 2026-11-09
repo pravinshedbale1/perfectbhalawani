@@ -8,11 +8,15 @@
   },
   "type": "module",
   "dependencies": {
+    "@fortune-sheet/react": "^1.0.4",
+    "@tinymce/tinymce-react": "^5.1.1",
     "exceljs": "^4.4.0",
+    "fabric": "^6.9.1",
     "firebase": "^11.0.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
+    "tinymce": "^6.8.6",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {

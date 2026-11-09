@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
-import { useCollection, useDocument } from '../../lib/useData';
+import { useCollection, useBoard } from '../../lib/useData';
 import { money, fmtDate, byTimeDesc } from '../../lib/format';
 import { moduleVisibleTo } from '../../lib/api';
 import { Spinner } from '../../components/ui';
@@ -11,7 +11,7 @@ export default function StudentHome() {
   const pays = useCollection('payments', [['studentId', '==', s.id]]);
   const exercises = useCollection('exercises');
   const modules = useCollection('modules');
-  const board = useDocument('leaderboards', s.batchId);
+  const board = useBoard(s.batchId);
 
   if (subs.loading || exercises.loading || modules.loading) return <Spinner />;
   const visibleMods = new Set(modules.data.filter((m) => moduleVisibleTo(m, s.courseId)).map((m) => m.id));

@@ -612,3 +612,52 @@ table.metrics td { padding: 5px 8px; border-bottom: 1px solid var(--line); font-
   .px-stats { gap: 10px; }
   .word-page { padding: 24px; min-height: auto; }
 }
+
+/* ================= Office सराव: Writer / Calc / Impress ================= */
+.split-desk.office { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); padding: 10px; gap: 10px; }
+.split-desk.office.wide { grid-template-columns: 1fr; }
+.split-desk.office .desk-ref { max-height: calc(100vh - 84px); }
+.split-desk.office.excel .desk-ref, .split-desk.office.excel .desk-work { max-height: none; overflow: hidden; }
+.split-desk.office .desk-work { position: relative; min-width: 0; }
+.ref-hide { float: right; background: rgba(255,255,255,.18); color: inherit; border: 1px solid currentColor; border-radius: 6px; padding: 1px 8px; font: inherit; font-size: 11px; cursor: pointer; letter-spacing: 0; }
+.ref-show { position: absolute; z-index: 5; right: 10px; bottom: 34px; background: var(--navy); color: #fff; border: 0; border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; box-shadow: var(--shadow-lg); }
+.calc-host { position: relative; width: 100%; border: 1px solid #cfd6df; }
+.calc-host .fortune-container { font-family: Arial, sans-serif; }
+.tox.tox-tinymce { border-radius: 0; border: 0; }
+.tox-tinymce-aux { z-index: 1200 !important; }
+/* Impress */
+.imp { display: flex; flex-direction: column; background: #f3f3f3; border: 1px solid #d0d5dd; min-height: 420px; }
+.imp-tabs { display: flex; gap: 2px; background: #b7472a; padding: 4px 8px 0; }
+.imp-tabs button { background: transparent; color: #fff; border: 0; padding: 6px 14px; font: inherit; font-size: 13px; cursor: pointer; border-radius: 6px 6px 0 0; }
+.imp-tabs button.on { background: #f3f3f3; color: #b7472a; font-weight: 700; }
+.imp-ribbon { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 6px 8px; background: #f3f3f3; border-bottom: 1px solid #d0d5dd; min-height: 44px; }
+.imp-ribbon button, .imp-ribbon select, .imp-color { width: auto; border: 1px solid #cfd6df; background: #fff; border-radius: 5px; padding: 4px 9px; font: inherit; font-size: 13px; cursor: pointer; min-height: 30px; color: #222; }
+.imp-ribbon button:hover:not(:disabled) { background: #fde8e1; }
+.imp-ribbon button.on { background: #f9d3c6; border-color: #b7472a; }
+.imp-ribbon button:disabled, .imp-ribbon select:disabled { opacity: .45; cursor: default; }
+.imp-ribbon .sep { width: 1px; height: 24px; background: #cfd6df; margin: 0 3px; }
+.imp-color { position: relative; display: inline-flex; align-items: center; font-weight: 700; }
+.imp-color input { position: absolute; inset: 0; opacity: 0; width: 100%; padding: 0; cursor: pointer; }
+.imp-theme { min-width: 64px; border-width: 2px !important; font-weight: 800; display: inline-flex; flex-direction: column; line-height: 1.1; }
+.imp-theme small { font-size: 10px; font-weight: 600; }
+.imp-main { flex: 1; display: grid; grid-template-columns: 150px 1fr; min-height: 0; }
+.imp-thumbs { overflow-y: auto; padding: 8px; background: #e9e9e9; border-right: 1px solid #d0d5dd; }
+.imp-thumb { position: relative; margin-bottom: 8px; padding-left: 16px; cursor: pointer; }
+.imp-thumb span { position: absolute; left: 0; top: 2px; font-size: 11px; color: #555; }
+.imp-thumb img, .imp-thumb .ph { width: 100%; aspect-ratio: 16/9; display: block; background: #fff; border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.imp-thumb.on img, .imp-thumb.on .ph { border-color: #b7472a; }
+.imp-thumb-act { display: flex; gap: 4px; justify-content: center; }
+.imp-thumb-act button { border: 1px solid #cfd6df; background: #fff; border-radius: 5px; width: 32px; height: 28px; cursor: pointer; }
+.imp-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px; min-width: 0; min-height: 0; overflow: hidden; background: #d9d9d9; }
+.imp-canvas { box-shadow: 0 3px 14px rgba(0,0,0,.25); background: #fff; }
+.imp-hint { margin-top: 6px; color: #555 !important; }
+.imp-viewer { display: flex; flex-wrap: wrap; gap: 10px; }
+.imp-viewer figure { margin: 0; cursor: zoom-in; }
+.imp-viewer img { width: 100%; display: block; border: 1px solid #ccd; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+.imp-viewer figcaption { font-size: 11px; color: var(--muted); text-align: center; }
+.imp-show { position: fixed; inset: 0; z-index: 2000; background: #000; display: grid; place-items: center; cursor: pointer; }
+.imp-show img { max-width: 100vw; max-height: 100vh; }
+.imp-show-bar { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.6); color: #fff; padding: 6px 12px; border-radius: 8px; display: flex; gap: 10px; align-items: center; cursor: default; font-size: 14px; }
+.imp-show-bar button { background: rgba(255,255,255,.15); color: #fff; border: 0; border-radius: 5px; padding: 4px 10px; cursor: pointer; }
+.desk-work .imp { border: 0; }
+@media (max-width: 900px) { .split-desk.office { grid-template-columns: 1fr; } .imp-main { grid-template-columns: 90px 1fr; } }

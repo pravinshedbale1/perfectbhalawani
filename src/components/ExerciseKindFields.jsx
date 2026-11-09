@@ -1,7 +1,11 @@
-import { Field } from './ui';
+import { lazy, Suspense } from 'react';
+import { Field, Spinner } from './ui';
 import SampleEditor from './SampleEditor';
 import SheetGrid from './practice/SheetGrid';
 import { KINDS, EMAIL_FIELDS, TARGET_WPM, parseMcq } from '../lib/practice';
+
+const CalcEditor = lazy(() => import('./office/CalcEditor'));
+const ImpressEditor = lazy(() => import('./office/ImpressEditor'));
 
 // Admin: सरावाच्या प्रकारानुसार fields (eEdit = संपादनातील सराव)
 export default function ExerciseKindFields({ e, set }) {
@@ -46,10 +50,39 @@ export default function ExerciseKindFields({ e, set }) {
         </>
       )}
 
-      {kind === 'letter' && (
+      {(kind === 'letter' || kind === 'writer') && (
         <>
-          {timeSel('वेळ मर्यादा', [0, 300, 600, 900, 1200, 1800])}
-          <Field label="📄 संदर्भ पत्र (विद्यार्थ्यांना डावीकडे दिसेल; मजकूर व formatting दोन्ही तपासले जातात)" required full>
+          {timeSel('वेळ मर्यादा', [0, 300, 600, 900, 1200, 1800, 2700, 3600])}
+          <Field label={kind === 'writer' ? '📄 नमुना document (डावीकडे दिसेल). विद्यार्थी Word सारख्या पूर्ण संपादकात (File/Edit/Insert/Format/Table menus) तसाच तयार करतील. मजकूर व formatting आपोआप तपासले जातात; नमुना नसल्यास तुम्ही पाहून गुण द्या.' : '📄 संदर्भ पत्र (विद्यार्थ्यांना डावीकडे दिसेल; मजकूर व formatting दोन्ही तपासले जातात)'} required={kind === 'letter'} full>
+            <SampleEditor value={e.sampleHtml || ''} onChange={(v) => upd({ sampleHtml: v })} />
+          </Field>
+        </>
+      )}
+
+      {kind === 'calc' && (
+        <>
+          {timeSel('वेळ मर्यादा', [0, 600, 900, 1200, 1800, 2700, 3600])}
+          <Field label="📗 संदर्भ workbook — Excel सारखे पूर्ण sheet (सूत्रे =SUM(), formatting, merge, borders). विद्यार्थ्यांच्या sheet ची मूल्ये, सूत्रे व formatting याच्याशी तपासली जातील. (रिकामे ठेवल्यास तुम्ही पाहून गुण द्या)" full>
+            <Suspense fallback={<Spinner />}>
+              <CalcEditor key={e._rk || 0} json={e.refBook || ''} height={460} onChange={(j) => upd({ refBook: j })} />
+            </Suspense>
+            {e.refBook && <button type="button" className="btn sm light mt" onClick={() => confirm('संदर्भ workbook काढायचे?') && upd({ refBook: '' , _rk: (e._rk || 0) + 1 })}>🗑 संदर्भ काढा</button>}
+          </Field>
+          <Field label="📘 नमुना / सूचना (ऐच्छिक — संदर्भ workbook नसल्यास डावीकडे हा दिसेल)" full>
+            <SampleEditor value={e.sampleHtml || ''} onChange={(v) => upd({ sampleHtml: v })} />
+          </Field>
+        </>
+      )}
+
+      {kind === 'impress' && (
+        <>
+          {timeSel('वेळ मर्यादा', [0, 600, 900, 1200, 1800, 2700, 3600])}
+          <Field label="📙 संदर्भ presentation — slides तयार करा (विद्यार्थ्यांना डावीकडे दिसतील; slides संख्या, मजकूर, चित्रे/आकार तपासले जातील). रिकामे ठेवल्यास खालील नमुना दिसेल." full>
+            <Suspense fallback={<Spinner />}>
+              <ImpressEditor json={e.refDeck || ''} height={560} onChange={(j) => upd({ refDeck: j })} />
+            </Suspense>
+          </Field>
+          <Field label="📘 नमुना / सूचना (ऐच्छिक)" full>
             <SampleEditor value={e.sampleHtml || ''} onChange={(v) => upd({ sampleHtml: v })} />
           </Field>
         </>

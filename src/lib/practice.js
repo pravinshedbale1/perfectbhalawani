@@ -1,5 +1,6 @@
 import { doc, increment, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { updateMyBoardRow } from './api';
 
 // ---------------- सरावाचे प्रकार ----------------
 // upload: फाइल तयार करून अपलोड · बाकी सर्व पोर्टलवरच करायचे (फाइल नाही)
@@ -8,6 +9,9 @@ export const KINDS = {
   keys: { icon: '⌨️', label: 'Keyboard Lesson (अक्षरानुसार)', short: 'Keyboard Lesson' },
   typing: { icon: '⏱️', label: 'Speed Typing (परिच्छेद)', short: 'Speed Typing' },
   letter: { icon: '📝', label: 'Letter Writing (Word सारखे)', short: 'Letter Writing' },
+  writer: { icon: '📄', label: 'Writer / Word — पूर्ण document', short: 'Writer (Word)' },
+  calc: { icon: '📗', label: 'Calc / Excel — पूर्ण spreadsheet', short: 'Calc (Excel)' },
+  impress: { icon: '📙', label: 'Impress / PowerPoint — slides', short: 'Impress (PPT)' },
   statement: { icon: '📊', label: 'Statement (Excel सारखे)', short: 'Statement' },
   email: { icon: '📧', label: 'Email Writing', short: 'Email Writing' },
   mcq: { icon: '❓', label: 'MCQ प्रश्नमंजुषा', short: 'MCQ' },
@@ -176,6 +180,7 @@ export const formatMcq = (qs = []) => qs.map((x, i) => [`Q${i + 1}: ${x.q}`, ...
 const half = (x) => Math.round(x * 2) / 2;
 export function suggestMarks(ex, m) {
   const max = Number(ex.maxMarks || 10);
+  if (ex.kind !== 'mcq' && (m.accuracy === null || m.accuracy === undefined)) return null; // संदर्भ नसल्यास शिक्षकच गुण देतील
   let f;
   if (ex.kind === 'mcq') f = m.total ? m.correct / m.total : 0;
   else if (ex.kind === 'typing' || ex.kind === 'keys') {
@@ -187,10 +192,12 @@ export function suggestMarks(ex, m) {
 }
 
 // ---------------- सादर करणे (Admin तपासणीसाठी; गुण Admin देतो) ----------------
+// सादर करणे = आपोआप गुण (प्रश्नमंजुषेप्रमाणे). पुन्हा सादर केल्यास सर्वोत्तम गुण राहतात.
+// Admin ने गुण बदलल्यास (auto=false) ते कायम; संदर्भ नसल्यास (गुण काढता येत नाहीत) Admin कडे तपासणीसाठी.
 export async function submitPractice({ student, exercise, module, metrics, work, prev }) {
-  const suggestedMarks = suggestMarks(exercise, metrics);
-  const short = { wpm: metrics.wpm ?? null, accuracy: metrics.accuracy ?? null, errors: metrics.errors ?? null, seconds: metrics.seconds ?? null, at: new Date().toISOString() };
-  await setDoc(doc(db, 'submissions', `${student.id}_${exercise.id}`), {
+  const marks = suggestMarks(exercise, metrics);
+  const short = { wpm: metrics.wpm ?? null, accuracy: metrics.accuracy ?? null, errors: metrics.errors ?? null, seconds: metrics.seconds ?? null, marks, at: new Date().toISOString() };
+  const base = {
     studentId: student.id,
     studentName: student.name,
     batchId: student.batchId,
@@ -201,15 +208,25 @@ export async function submitPractice({ student, exercise, module, metrics, work,
     moduleTitle: module?.title || '',
     maxMarks: Number(exercise.maxMarks || 10),
     kind: exercise.kind,
-    metrics,
-    work: work || {},
-    suggestedMarks,
-    status: 'submitted',
+    suggestedMarks: marks,
     attempts: increment(1),
     history: [...(prev?.history || []), short].slice(-10),
-    submittedAt: serverTimestamp(),
-  }, { merge: true });
-  return suggestedMarks;
+    lastMetrics: metrics,
+  };
+  const ref = doc(db, 'submissions', `${student.id}_${exercise.id}`);
+  let best = marks, improved = true;
+  if (marks === null) {
+    await setDoc(ref, { ...base, metrics, work: work || {}, status: 'submitted', submittedAt: serverTimestamp() }, { merge: true });
+  } else {
+    const prevAuto = prev?.status === 'evaluated' && prev.auto === true && typeof prev.marks === 'number';
+    improved = !prevAuto || marks >= prev.marks;
+    best = improved ? marks : prev.marks;
+    await setDoc(ref, improved
+      ? { ...base, metrics, work: work || {}, marks, auto: true, status: 'evaluated', submittedAt: serverTimestamp(), evaluatedAt: serverTimestamp(), evaluatedBy: 'auto' }
+      : { ...base, marks: prev.marks, auto: true, status: 'evaluated' }, { merge: true });
+  }
+  updateMyBoardRow(student).catch((e) => console.warn('board', e));
+  return { marks, best, improved, auto: marks !== null };
 }
 
 // मॉड्यूल "क्रमाने उघडा" असल्यास: आधीचा सराव सादर केल्याशिवाय पुढचा बंद

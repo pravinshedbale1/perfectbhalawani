@@ -235,3 +235,54 @@ export const LAB_MODULES = [
     ],
   },
 ];
+
+// ---------------- Office Lab: Writer / Calc / Impress (पोर्टलवरच पूर्ण संपादक) ----------------
+const cell = (r, c, v, extra = {}) => ({ r, c, v: { v, m: String(v), ct: { fa: 'General', t: typeof v === 'number' ? 'n' : 'g' }, ...extra } });
+const RESULT = [['Aditi Kulkarni', 42, 38, 45], ['Omkar Deshmukh', 35, 29, 40], ['Sakshi More', 48, 44, 50], ['Vaibhav Salunkhe', 18, 22, 15], ['Neha Bhosale', 40, 41, 37]];
+const resultCells = [
+  cell(0, 0, 'Unit Test Result - Std. IX', { bl: 1, fs: 14 }),
+  ...['Roll No.', 'Name', 'Marathi', 'English', 'Maths', 'Total', 'Average', 'Result'].map((h, c) => cell(2, c, h, { bl: 1, bg: '#dbeafe', ht: 0 })),
+  ...RESULT.flatMap(([n, a, b, m], i) => {
+    const r = 3 + i, row = r + 1, tot = a + b + m;
+    return [
+      cell(r, 0, i + 1), cell(r, 1, n), cell(r, 2, a), cell(r, 3, b), cell(r, 4, m),
+      cell(r, 5, tot, { f: `=SUM(C${row}:E${row})` }),
+      cell(r, 6, Math.round((tot / 3) * 100) / 100, { f: `=ROUND(AVERAGE(C${row}:E${row}),2)` }),
+      cell(r, 7, Math.min(a, b, m) >= 35 ? 'Pass' : 'Fail', { f: `=IF(MIN(C${row}:E${row})>=35,"Pass","Fail")` }),
+    ];
+  }),
+  cell(9, 1, 'Class Average', { bl: 1 }),
+  ...[2, 3, 4].map((c) => { const col = 'CDE'[c - 2]; const vals = RESULT.map((x) => x[c - 1]); return cell(9, c, Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 100) / 100, { bl: 1, f: `=ROUND(AVERAGE(${col}4:${col}8),2)` }); }),
+];
+const RESULT_BOOK = JSON.stringify([{ name: 'Result', order: 0, celldata: resultCells, config: { merge: { '0_0': { r: 0, c: 0, rs: 1, cs: 8 } }, columnlen: { 1: 150 } } }]);
+
+const T = (text, o) => ({ type: 'Textbox', version: '6.9.1', left: 70, top: 40, width: 820, fontSize: 28, fontFamily: 'Calibri', fill: '#1f2937', text, ...o });
+const DECK = JSON.stringify({
+  w: 960, h: 540, slides: [
+    { id: 'a', bg: '#0b2545', json: { objects: [
+      T('PERFECT COMPUTERS', { top: 160, fontSize: 56, fontWeight: 'bold', textAlign: 'center', fill: '#ffffff' }),
+      T('Computer Education Centre, Bhalwani', { top: 260, fontSize: 28, textAlign: 'center', fill: '#f4a259' }),
+      { type: 'Rect', version: '6.9.1', left: 330, top: 320, width: 300, height: 6, fill: '#f4a259' },
+    ] } },
+    { id: 'b', bg: '#ffffff', json: { objects: [
+      T('Our Courses', { top: 36, fontSize: 40, fontWeight: 'bold', fill: '#0b2545' }),
+      T('• MS-CIT\n• Typing (English & Marathi)\n• Tally Prime with GST\n• DTP and Internet', { top: 130, fontSize: 30, lineHeight: 1.4 }),
+      { type: 'Circle', version: '6.9.1', left: 700, top: 170, radius: 90, fill: '#f4a259' },
+    ] } },
+    { id: 'c', bg: '#fff4e6', json: { objects: [
+      T('Contact Us', { top: 36, fontSize: 40, fontWeight: 'bold', fill: '#b45309' }),
+      T('Near Maruti Temple, Kasba, Bhalwani\nPhone: 96659 78585\nAdmissions open — join today!', { top: 150, fontSize: 30, lineHeight: 1.5, textAlign: 'center' }),
+    ] } },
+  ],
+});
+
+LAB_MODULES.push({
+  title: '🖥️ Office Lab — Writer, Calc, Impress', icon: '🖥️',
+  desc: 'Word / Excel / PowerPoint सारखे पूर्ण संपादक पोर्टलवरच — डावीकडे नमुना, उजवीकडे काम, सादर करा.',
+  exercises: [
+    { title: 'Writer 01 — Notice with Table', kind: 'writer', tool: 'Writer', maxMarks: 10, order: 1, intro: 'नमुन्याप्रमाणे सूचना (Notice) तयार करा: शीर्षक मध्यभागी व Bold, तारीख उजवीकडे, वेळापत्रकाचा table.', steps: ['शीर्षक: Heading 1, मध्यभागी, Bold.', 'तारीख उजवीकडे (Align right).', 'Table → Insert table (3 स्तंभ, 4 ओळी), पहिली ओळ Bold.', 'शेवटी सही उजवीकडे.'],
+      sampleHtml: '<h1 style="text-align:center">NOTICE</h1><p style="text-align:right"><b>Date : 15 November 2026</b></p><p style="text-align:justify">All students are informed that the practical examination of the computer course will be held as per the following schedule. Students must report 15 minutes before the time.</p><table style="border-collapse:collapse;width:100%" border="1"><tbody><tr><td><b>Batch</b></td><td><b>Date</b></td><td><b>Time</b></td></tr><tr><td>Morning</td><td>20/11/2026</td><td>8.00 a.m.</td></tr><tr><td>Afternoon</td><td>20/11/2026</td><td>1.00 p.m.</td></tr><tr><td>Evening</td><td>21/11/2026</td><td>5.00 p.m.</td></tr></tbody></table><p style="text-align:right"><b>Director</b><br>Perfect Computers, Bhalwani</p>' },
+    { title: 'Calc 01 — Result Sheet with Formulas', kind: 'calc', tool: 'Calc', maxMarks: 10, order: 2, refBook: RESULT_BOOK, intro: 'संदर्भाप्रमाणे निकाल पत्रक तयार करा. Total, Average व Result स्वतः सूत्रांनी काढा (आकडे टाइप करू नका).', steps: ['A1 मध्ये शीर्षक, A1:H1 Merge करून Bold.', 'ओळ 3 मध्ये headings — Bold व रंगीत पार्श्वभूमी.', 'Total: =SUM(C4:E4) व खाली copy करा.', 'Average: =ROUND(AVERAGE(C4:E4),2).', 'Result: =IF(MIN(C4:E4)>=35,"Pass","Fail").', 'ओळ 10: विषयवार Class Average.'] },
+    { title: 'Impress 01 — Centre Presentation (3 slides)', kind: 'impress', tool: 'Impress', maxMarks: 10, order: 3, refDeck: DECK, intro: 'नमुन्यातील 3 slides तसेच तयार करा: Title slide, Courses (bullets + आकार), Contact.', steps: ['Home → New Slide मधून layouts निवडा.', 'Design → Background / Theme ने रंग द्या.', 'Insert → Shapes मधून वर्तुळ / रेषा जोडा.', 'Slide Show → From Beginning ने तपासा.'] },
+  ],
+});

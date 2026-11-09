@@ -204,6 +204,7 @@ export async function evaluateSubmission(sub, { marks, feedback, status }) {
     marks: status === 'evaluated' ? Number(marks) : null,
     feedback: feedback || '',
     status,
+    auto: false, // Admin ने गुण दिले — विद्यार्थ्याचे पुढचे प्रयत्न हे बदलू शकत नाहीत
     evaluatedAt: serverTimestamp(),
     evaluatedBy: auth.currentUser?.email || '',
   });
@@ -215,7 +216,7 @@ export async function bulkEvaluate(list) {
   for (let i = 0; i < list.length; i += 400) {
     const b = writeBatch(db);
     list.slice(i, i + 400).forEach(({ sub, marks }) => b.update(doc(db, 'submissions', sub.id), {
-      marks: Number(marks), status: 'evaluated', evaluatedAt: serverTimestamp(), evaluatedBy: auth.currentUser?.email || '',
+      marks: Number(marks), status: 'evaluated', auto: false, evaluatedAt: serverTimestamp(), evaluatedBy: auth.currentUser?.email || '',
     }));
     await b.commit();
   }
@@ -249,6 +250,27 @@ export async function recomputeLeaderboard(batchId) {
   let rank = 0, prev = null;
   list.forEach((r, i) => { if (r.total !== prev) { rank = i + 1; prev = r.total; } r.rank = rank; });
   await setDoc(doc(db, 'leaderboards', batchId), { rows: list, updatedAt: serverTimestamp() });
+  // थेट लीडरबोर्ड: प्रत्येक विद्यार्थ्याची स्वतंत्र ओळ (boardRows/{uid}); या बॅचमध्ये नसलेल्या ओळी काढा
+  const old = await getDocs(query(collection(db, 'boardRows'), where('batchId', '==', batchId)));
+  const wb = writeBatch(db);
+  old.docs.forEach((d) => { if (!rows[d.id]) wb.delete(d.ref); });
+  list.forEach((r) => wb.set(doc(db, 'boardRows', r.studentId), { batchId, name: r.name, total: r.total, max: r.max, evaluated: r.evaluated, submitted: r.submitted, updatedAt: serverTimestamp() }));
+  await wb.commit();
+}
+
+// विद्यार्थ्याने सराव सादर केल्यावर स्वतःची लीडरबोर्ड ओळ अद्ययावत (Admin ची गरज नाही)
+export async function updateMyBoardRow(student) {
+  if (!student?.batchId || student.active === false) return;
+  const subs = await getDocs(query(collection(db, 'submissions'), where('studentId', '==', student.id)));
+  const r = { total: 0, max: 0, evaluated: 0, submitted: 0 };
+  subs.docs.forEach((d) => {
+    const x = d.data();
+    if (x.batchId !== student.batchId) return;
+    r.submitted++;
+    if (x.status === 'evaluated' && typeof x.marks === 'number') { r.total += x.marks; r.max += Number(x.maxMarks || 0); r.evaluated++; }
+  });
+  r.total = Math.round(r.total * 2) / 2;
+  await setDoc(doc(db, 'boardRows', student.id), { batchId: student.batchId, name: student.name, ...r, updatedAt: serverTimestamp() });
 }
 
 // ---------------- मॉड्यूल व सराव ----------------
@@ -281,6 +303,14 @@ export async function applyStandardSamples() {
     if (std.kind === 'typing' && !x.kind) Object.assign(patch, { kind: 'typing', lang: std.lang, duration: std.duration });
     if (std.sampleHtml && !x.sampleHtml) Object.assign(patch, { sampleHtml: std.sampleHtml, kind: x.kind || 'upload' });
     if (Object.keys(patch).length) { b.update(d.ref, patch); updated++; if (++ops >= 400) await flush(); }
+  }
+  // Ready-Made मॉड्यूल्समधील "फाइल अपलोड" सराव → पोर्टलवरील Writer / Calc / Impress
+  const modTitle = Object.fromEntries(mSnap.docs.map((d) => [d.id, d.data().title]));
+  const seedKind = {};
+  [...LAB_MODULES, ...SAMPLE_MODULES].forEach((m) => m.exercises.forEach((e) => { seedKind[`${m.title}|${e.title}`] = e.kind; }));
+  for (const d of eSnap.docs) {
+    const x = d.data(), k = seedKind[`${modTitle[x.moduleId]}|${x.title}`];
+    if (k && ['writer', 'calc', 'impress'].includes(k) && (!x.kind || x.kind === 'upload')) { b.update(d.ref, { kind: k }); updated++; if (++ops >= 400) await flush(); }
   }
   const titles = new Set(mSnap.docs.map((d) => d.data().title));
   let order = mSnap.size;

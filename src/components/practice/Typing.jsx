@@ -64,7 +64,7 @@ export function KeysPractice({ ex, canSubmit, onSubmit, onExit }) {
   return (
     <Shell ex={ex} clock={clock} onExit={onExit} onReset={reset} onSubmit={() => done()} submitLabel="✓ पूर्ण करा"
       stats={[['WPM', wpm], ['अचूकता', accuracy + '%'], ['चुका', keys.total - keys.ok], ['प्रगती', progress + '%']]}
-      result={f.res && <ResultCard rows={f.res.rows} {...f} canSubmit={canSubmit} onSubmit={f.submit} onAgain={reset} onExit={onExit} />}>
+      result={f.res && <ResultCard maxMarks={ex.maxMarks || 10} rows={f.res.rows} {...f} canSubmit={canSubmit} onSubmit={f.submit} onAgain={reset} onExit={onExit} />}>
       <div className="px-pad">
         {ex.keysLabel && <div className="px-focus">Focus keys: <code>{ex.keysLabel}</code></div>}
         <div className="px-progress"><div style={{ width: progress + '%' }} /></div>
@@ -135,7 +135,7 @@ export function PassagePractice({ ex, canSubmit, onSubmit, onExit }) {
   return (
     <Shell ex={ex} clock={clock} countdown onExit={onExit} onReset={reset} onSubmit={() => done(typed)} submitLabel="✓ Submit Passage"
       stats={[['शब्द', words(typed).length], ['WPM', wpm], ['अचूकता', cmp.accuracy + '%'], ['चुका', cmp.errors]]}
-      result={f.res && <ResultCard rows={f.res.rows} {...f} canSubmit={canSubmit} onSubmit={f.submit} onAgain={reset} onExit={onExit} />}>
+      result={f.res && <ResultCard maxMarks={ex.maxMarks || 10} rows={f.res.rows} {...f} canSubmit={canSubmit} onSubmit={f.submit} onAgain={reset} onExit={onExit} />}>
       <div className="word-desk">
         <div className="word-page ref">
           <div className="word-label">मूळ परिच्छेद</div>

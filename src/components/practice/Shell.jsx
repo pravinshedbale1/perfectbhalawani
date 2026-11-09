@@ -52,7 +52,7 @@ export default function Shell({ ex, clock, countdown, stats = [], onExit, onRese
 }
 
 // निकाल: आकडे + सुचवलेले गुण; पुन्हा सराव / बाहेर
-export function ResultCard({ title = 'सराव पूर्ण 🎉', rows, saved, saving, error, canSubmit, onSubmit, onAgain, onExit, note }) {
+export function ResultCard({ title = 'सराव पूर्ण 🎉', rows, saved, saving, error, canSubmit, onSubmit, onAgain, onExit, note, maxMarks }) {
   return (
     <div className="px-result-bg">
       <div className="px-result">
@@ -63,14 +63,18 @@ export function ResultCard({ title = 'सराव पूर्ण 🎉', rows, 
         {note && <p className="small muted">{note}</p>}
         {error && <div className="alert err">{error}</div>}
         {saved ? (
-          <div className="alert ok">✅ सादर झाले! शिक्षक तपासून गुण देतील. तुम्ही पुन्हा सराव करून सुधारित निकाल परत सादर करू शकता.</div>
+          saved.auto ? (
+            <div className="alert ok">✅ सादर झाले! मिळालेले गुण: <b style={{ fontSize: 20 }}>{saved.marks} / {maxMarks}</b>
+              {!saved.improved && <div className="small">(तुमचे आधीचे सर्वोत्तम गुण {saved.best} कायम आहेत)</div>}
+              <div className="small">पुन्हा सराव करून गुण वाढवू शकता — सर्वोत्तम गुण राहतात.</div></div>
+          ) : <div className="alert ok">✅ सादर झाले! या सरावासाठी संदर्भ नसल्याने शिक्षक तपासून गुण देतील.</div>
         ) : canSubmit ? (
-          <p className="small">हा निकाल शिक्षकांकडे तपासणीसाठी पाठवायचा?</p>
+          <p className="small">हा निकाल सादर करायचा? गुण लगेच आपोआप मिळतील.</p>
         ) : (
-          <p className="small muted">हा सराव शिक्षकांनी आधीच तपासला आहे — हा निकाल फक्त तुमच्या सरावासाठी.</p>
+          <p className="small muted">शिक्षकांनी या सरावाचे गुण निश्चित केले आहेत — हा निकाल फक्त तुमच्या सरावासाठी.</p>
         )}
         <div className="row" style={{ justifyContent: 'center' }}>
-          {!saved && canSubmit && <button className="btn saffron" disabled={saving} onClick={onSubmit}>{saving ? 'पाठवत आहे…' : '📤 शिक्षकांकडे सादर करा'}</button>}
+          {!saved && canSubmit && <button className="btn saffron" disabled={saving} onClick={onSubmit}>{saving ? 'पाठवत आहे…' : '📤 सादर करा व गुण मिळवा'}</button>}
           <button className="btn light" onClick={onAgain}>🔁 पुन्हा सराव</button>
           <button className="btn light" onClick={onExit}>← बाहेर</button>
         </div>
@@ -88,7 +92,7 @@ export function useFinish({ onSubmit }) {
   const finish = (r) => { setRes(r); setSaved(false); setError(''); };
   const submit = async () => {
     setSaving(true); setError('');
-    try { await onSubmit(res.metrics, res.work); setSaved(true); } catch (e) { setError('सादर झाले नाही: ' + e.message); }
+    try { const r = await onSubmit(res.metrics, res.work); setSaved(r || { auto: false }); } catch (e) { setError('सादर झाले नाही: ' + e.message); }
     finally { setSaving(false); }
   };
   return { res, finish, clear: () => setRes(null), submit, saving, saved, error };

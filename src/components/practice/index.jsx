@@ -1,17 +1,27 @@
 import { KeysPractice, PassagePractice } from './Typing';
-import LetterPractice from './Letter';
+import { lazy, Suspense } from 'react';
 import StatementPractice from './Statement';
 import EmailPractice from './Email';
 import McqPractice from './Mcq';
 import SheetGrid from './SheetGrid';
 import SampleView from '../SampleView';
+import { Spinner } from '../ui';
+import { downloadDoc, downloadXlsx } from '../../lib/office';
+
+// जड संपादक (TinyMCE / Fortune-sheet / Fabric) गरज असेल तेव्हाच लोड
+const WriterPractice = lazy(() => import('./Office').then((m) => ({ default: m.WriterPractice })));
+const CalcPractice = lazy(() => import('./Office').then((m) => ({ default: m.CalcPractice })));
+const ImpressPractice = lazy(() => import('./Office').then((m) => ({ default: m.ImpressPractice })));
+const CalcEditor = lazy(() => import('../office/CalcEditor'));
+const ImpressViewer = lazy(() => import('../office/ImpressEditor').then((m) => ({ default: m.ImpressViewer })));
+const Loading = () => <div className="px-shell" style={{ display: 'grid', placeItems: 'center' }}><div style={{ textAlign: 'center' }}><Spinner /><p className="muted">Office संपादक लोड होत आहे…</p></div></div>;
 import { EMAIL_FIELDS, compareWords, gridFromRows, words, fmtClock } from '../../lib/practice';
 
-const MAP = { keys: KeysPractice, typing: PassagePractice, letter: LetterPractice, statement: StatementPractice, email: EmailPractice, mcq: McqPractice };
+const MAP = { keys: KeysPractice, typing: PassagePractice, letter: WriterPractice, writer: WriterPractice, calc: CalcPractice, impress: ImpressPractice, statement: StatementPractice, email: EmailPractice, mcq: McqPractice };
 
 export default function Practice(props) {
   const C = MAP[props.ex.kind];
-  return C ? <C {...props} /> : null;
+  return C ? <Suspense fallback={<Loading />}><C {...props} /></Suspense> : null;
 }
 
 // आकड्यांचा छोटा सारांश (यादी/टेबलसाठी)
@@ -21,6 +31,9 @@ export function metricsLine(kind, m) {
   if (kind === 'mcq') return `${m.correct}/${m.total} बरोबर${t}`;
   if (kind === 'statement') return `${m.accuracy}% · ${m.correctCells}/${m.totalCells} cells${t}`;
   if (kind === 'email') return `${m.accuracy}% · fields ${m.fieldsOk}/4${t}`;
+  if (kind === 'calc') return m.accuracy != null ? `${m.accuracy}% · मूल्ये ${m.values.ok}/${m.values.total}${m.formulas?.total ? ` · सूत्रे ${m.formulas.ok}/${m.formulas.total}` : ''}${t}` : `Workbook${t}`;
+  if (kind === 'impress') return `${m.slides} slides${m.accuracy != null ? ` · ${m.accuracy}%` : ''}${t}`;
+  if (kind === 'writer' && m.accuracy == null) return `${m.typedWords} शब्द${t}`;
   return `${m.wpm ?? 0} WPM · ${m.accuracy}%${m.errors != null ? ` · ${m.errors} चुका` : ''}${t}`;
 }
 
@@ -31,12 +44,18 @@ export function MetricsTable({ kind, m }) {
   const add = (l, v) => v !== undefined && v !== null && rows.push([l, v]);
   if (kind === 'mcq') { add('बरोबर', `${m.correct}/${m.total}`); add('चूक', m.wrong); add('सोडलेले', m.total - m.attempted); add('टक्के', m.accuracy + '%'); }
   else if (kind === 'statement') { add('अचूकता', m.accuracy + '%'); add('बरोबर cells', `${m.correctCells}/${m.totalCells}`); add('चुकीचे cells', m.wrongCells); add('जास्तीचे cells', m.extraCells); }
-  else if (kind === 'email') {
+  else if (kind === 'calc') {
+    if (m.accuracy != null) { add('एकूण अचूकता', m.accuracy + '%'); add('मूल्ये (values)', `${m.values.ok}/${m.values.total}`); add('सूत्रे (formulas)', m.formulas.total ? `${m.formulas.ok}/${m.formulas.total}` : '—'); add('Formatting', m.format.total ? `${m.format.ok}/${m.format.total}` : '—'); if (m.badCells?.length) add('तपासा', m.badCells.join(', ')); }
+    else add('तपासणी', 'संदर्भ file नाही — शिक्षक पाहून गुण देतील');
+  } else if (kind === 'impress') {
+    add('Slides', m.refSlides ? `${m.slides}/${m.refSlides}` : m.slides);
+    if (m.accuracy != null) { add('एकूण अचूकता', m.accuracy + '%'); add('मजकूर अचूकता', m.textAccuracy != null ? m.textAccuracy + '%' : '—'); add('चित्रे', `${m.images}/${m.refImages}`); add('आकार', `${m.shapes}/${m.refShapes}`); }
+  } else if (kind === 'email') {
     add('एकूण अचूकता', m.accuracy + '%');
     EMAIL_FIELDS.forEach(([k, l]) => add(l, m.fields?.[k] ? '✓ बरोबर' : '✗ चूक'));
     add('मजकूर अचूकता', m.body?.accuracy + '%'); add('मजकूर: चुकीचे/गाळलेले/जास्त', `${m.body?.wrong}/${m.body?.missed}/${m.body?.extra}`); add('WPM', m.wpm);
   } else {
-    add('वेग (WPM)', m.wpm); add('Net WPM', m.netWpm); add('अचूकता', m.accuracy + '%'); add('मजकूर अचूकता', m.textAccuracy != null ? m.textAccuracy + '%' : undefined);
+    add('वेग (WPM)', m.wpm); add('Net WPM', m.netWpm); add('अचूकता', m.accuracy != null ? m.accuracy + '%' : 'शिक्षक तपासतील'); add('मजकूर अचूकता', m.textAccuracy != null ? m.textAccuracy + '%' : undefined);
     add('चुका', m.errors); add('Keystrokes', m.keystrokes); add('पूर्ण', m.progress != null ? m.progress + '%' : undefined);
     if (m.totalWords) add('शब्द (टाइप/एकूण)', `${m.typedWords}/${m.totalWords}`);
     if (m.correctWords != null) add('बरोबर/चुकीचे/गाळलेले/जास्त', `${m.correctWords}/${m.wrongWords}/${m.missedWords}/${m.extraWords}`);
@@ -63,12 +82,36 @@ export function WorkView({ ex, sub }) {
       </div>
     );
   }
-  if (kind === 'letter') {
+  const dlName = `${sub.studentName || 'student'}_${ex.title || 'practice'}`.replace(/[^\w\u0900-\u097F]+/g, '_').slice(0, 60);
+  if (kind === 'letter' || kind === 'writer') {
     return (
-      <div className="grid g2">
-        <div><b className="small">संदर्भ</b><SampleView html={ex.sampleHtml} maxHeight={520} /></div>
-        <div><b className="small">विद्यार्थ्याचे पत्र</b><SampleView html={w.html} maxHeight={520} /></div>
-      </div>
+      <>
+        <div className="grid g2">
+          <div><b className="small">संदर्भ</b>{ex.sampleHtml ? <SampleView html={ex.sampleHtml} maxHeight={560} /> : <p className="small muted">नमुना नाही</p>}</div>
+          <div><b className="small">विद्यार्थ्याचे document</b><SampleView html={w.html} maxHeight={560} /></div>
+        </div>
+        <button className="btn sm light mt" onClick={() => downloadDoc(w.html, dlName)}>⬇️ Word (.doc) डाउनलोड</button>
+      </>
+    );
+  }
+  if (kind === 'calc') {
+    return (
+      <Suspense fallback={<Spinner />}>
+        <b className="small">विद्यार्थ्याची workbook</b>
+        <CalcEditor key={sub.id + (sub.attempts || 0)} json={w.book} readOnly height={380} />
+        {ex.refBook && <><b className="small mt" style={{ display: 'block' }}>संदर्भ</b><CalcEditor key={'r' + sub.id} json={ex.refBook} readOnly height={300} /></>}
+        {!ex.refBook && ex.sampleHtml && <><b className="small mt" style={{ display: 'block' }}>नमुना</b><SampleView html={ex.sampleHtml} maxHeight={360} /></>}
+        <button className="btn sm light mt" onClick={() => downloadXlsx(w.book, dlName)}>⬇️ Excel (.xlsx) डाउनलोड</button>
+      </Suspense>
+    );
+  }
+  if (kind === 'impress') {
+    return (
+      <Suspense fallback={<Spinner />}>
+        <b className="small">विद्यार्थ्याचे slides (क्लिक = Slide Show)</b>
+        <ImpressViewer json={w.deck} width={300} />
+        {ex.refDeck ? <><b className="small">संदर्भ</b><ImpressViewer json={ex.refDeck} width={220} /></> : ex.sampleHtml && <><b className="small">नमुना</b><SampleView html={ex.sampleHtml} maxHeight={360} /></>}
+      </Suspense>
     );
   }
   if (kind === 'statement') {

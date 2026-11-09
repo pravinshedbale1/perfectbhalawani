@@ -50,7 +50,7 @@ export default function EmailPractice({ ex, canSubmit, onSubmit, onExit }) {
   return (
     <Shell ex={ex} clock={clock} countdown={!!Number(ex.duration)} onExit={onExit} onReset={reset} onSubmit={done} submitLabel="➤ Send"
       stats={[['प्रगती', progress + '%']]}
-      result={f.res && <ResultCard rows={f.res.rows} {...f} canSubmit={canSubmit} onSubmit={f.submit} onAgain={reset} onExit={onExit} />}>
+      result={f.res && <ResultCard maxMarks={ex.maxMarks || 10} rows={f.res.rows} {...f} canSubmit={canSubmit} onSubmit={f.submit} onAgain={reset} onExit={onExit} />}>
       <div className="mail-task">📧 <b>काम:</b> डावीकडील ईमेल उजवीकडे तंतोतंत टाइप करा (Mail to, Subject, CC, BCC व मजकूर) आणि Send दाबा. रिकामे field रिकामेच ठेवा.</div>
       <div className="split-desk mail">
         <div className="mail-card"><div className="mail-head">✉ REFERENCE EMAIL</div>{fields(ref, true)}</div>

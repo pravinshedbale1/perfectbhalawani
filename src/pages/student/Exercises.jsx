@@ -137,12 +137,16 @@ function Checklist() {
 function PortalDetail({ ex, module, sub, student, onDone }) {
   const [open, setOpen] = useState(false);
   const k = KINDS[ex.kind];
-  const canSubmit = sub?.status !== 'evaluated';
-  const onSubmit = async (metrics, work) => { await submitPractice({ student, exercise: ex, module, metrics, work, prev: sub }); onDone(); };
+  // आपोआप गुण मिळालेले असल्यास पुन्हा प्रयत्न चालतो (सर्वोत्तम राहतो); शिक्षकांनी गुण दिल्यास बंद
+  const canSubmit = !(sub?.status === 'evaluated' && sub.auto !== true);
+  const onSubmit = async (metrics, work) => { const r = await submitPractice({ student, exercise: ex, module, metrics, work, prev: sub }); onDone(); return r; };
   const how = {
     keys: 'खालील बटण दाबा, स्क्रीनवरील अक्षरे तशीच टाइप करा. चूक लाल दिसेल; Backspace ने दुरुस्त करा. पूर्ण झाल्यावर निकाल दिसेल.',
     typing: `डावीकडील परिच्छेद उजवीकडील पानावर टाइप करा. वेळ ${Math.round(Number(ex.duration || 600) / 60)} मिनिटे. शब्दानुसार तपासणी: बरोबर (हिरवा), चुकीचा (लाल), गाळलेला (पिवळा).`,
     letter: 'डावीकडील पत्र उजवीकडील Word सारख्या संपादकात formatting सह (Bold, Underline, Center, Right इ.) तसेच टाइप करा.',
+    writer: 'डावीकडे नमुना, उजवीकडे Word / Writer सारखा पूर्ण संपादक (File, Edit, Insert, Format, Table menus; font, रंग, alignment, tables, चित्रे, page break). नमुन्याप्रमाणे document तयार करून Submit Work दाबा.',
+    calc: 'उजवीकडे Excel / Calc सारखी पूर्ण sheet: सूत्रे (=SUM, =AVERAGE, =IF…), formatting, merge, borders, अनेक sheets. संदर्भाप्रमाणे sheet तयार करा आणि FINISH दाबा.',
+    impress: 'उजवीकडे PowerPoint / Impress सारखा slides editor: नवीन slide (layouts), text, आकार, चित्रे, tables, themes, Slide Show. नमुन्याप्रमाणे presentation तयार करा.',
     statement: 'डावीकडील तक्ता उजवीकडील Excel sheet मध्ये त्याच cells मध्ये तसाच भरा.',
     email: 'Mail to, Subject, CC, BCC व मजकूर — सर्व तंतोतंत टाइप करून Send दाबा.',
     mcq: `${(ex.questions || []).length} प्रश्न. उत्तर निवडताच बरोबर/चूक दिसेल.`,
@@ -157,7 +161,7 @@ function PortalDetail({ ex, module, sub, student, onDone }) {
           {(ex.kind === 'typing' || ex.kind === 'keys') && <p className="small muted">लक्ष्य वेग: {ex.targetWpm || TARGET_WPM[ex.lang] || 30} WPM · भाषा: {ex.lang === 'mr' ? 'मराठी (संगणकावर Marathi keyboard सुरू करा)' : 'English'}</p>}
           {ex.steps?.length > 0 && (<><h3 className="mt">सूचना</h3><ol className="steps">{ex.steps.map((st, i) => <li key={i}>{st}</li>)}</ol></>)}
           <button className="btn saffron big mt" onClick={() => setOpen(true)}>▶ सराव सुरू करा</button>
-          <p className="small muted">फाइल अपलोड नाही — सर्व काम इथेच. कितीही वेळा सराव करा; हवा तो निकाल शिक्षकांकडे सादर करा.</p>
+          <p className="small muted">फाइल अपलोड नाही — सर्व काम इथेच. सादर करताच गुण आपोआप मिळतात. कितीही वेळा प्रयत्न करा — सर्वोत्तम गुण राहतात.</p>
         </div>
         <div className="card">
           <h3 style={{ marginTop: 0 }}>🏅 तुमचे सादरीकरण</h3>

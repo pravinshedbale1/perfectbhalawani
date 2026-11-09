@@ -28,7 +28,7 @@ export default function StatementPractice({ ex, canSubmit, onSubmit, onExit }) {
   return (
     <Shell ex={ex} clock={clock} countdown={!!Number(ex.duration)} onExit={onExit} onReset={reset} onSubmit={done} submitLabel="✓ FINISH"
       stats={[['भरलेले cells', `${filled}/${refCells}`]]}
-      result={f.res && <ResultCard rows={f.res.rows} {...f} note={f.res.metrics.badCells?.length ? 'चुकीचे cells: ' + f.res.metrics.badCells.join(', ') : ''} canSubmit={canSubmit} onSubmit={f.submit} onAgain={reset} onExit={onExit} />}>
+      result={f.res && <ResultCard maxMarks={ex.maxMarks || 10} rows={f.res.rows} {...f} note={f.res.metrics.badCells?.length ? 'चुकीचे cells: ' + f.res.metrics.badCells.join(', ') : ''} canSubmit={canSubmit} onSubmit={f.submit} onAgain={reset} onExit={onExit} />}>
       <div className="split-desk excel">
         <div className="desk-ref">
           <div className="word-label">REFERENCE SHEET (फक्त वाचा)</div>

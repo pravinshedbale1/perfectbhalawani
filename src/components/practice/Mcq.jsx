@@ -35,7 +35,7 @@ export default function McqPractice({ ex, canSubmit, onSubmit, onExit }) {
   return (
     <Shell ex={ex} clock={clock} countdown={!!Number(ex.duration)} onExit={onExit} onReset={reset} onSubmit={() => (ans.some((x) => x < 0) && !confirm(`${ans.filter((x) => x < 0).length} प्रश्न बाकी आहेत. तरी संपवायचे?`) ? null : done())} submitLabel="✓ प्रश्नमंजुषा संपवा"
       stats={[['✓', correct], ['✗', wrong], ['प्रगती', `${i + 1}/${qs.length}`]]}
-      result={f.res && <ResultCard rows={f.res.rows} {...f} canSubmit={canSubmit} onSubmit={f.submit} onAgain={reset} onExit={onExit} />}>
+      result={f.res && <ResultCard maxMarks={ex.maxMarks || 10} rows={f.res.rows} {...f} canSubmit={canSubmit} onSubmit={f.submit} onAgain={reset} onExit={onExit} />}>
       <div className="mcq">
         <div className="px-progress"><div style={{ width: ((i + 1) / qs.length) * 100 + '%' }} /></div>
         <div className="mcq-card">

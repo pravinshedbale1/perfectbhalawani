@@ -12,6 +12,9 @@ service cloud.firestore {
     function isStudent() {
       return signedIn() && exists(/databases/$(database)/documents/students/$(request.auth.uid));
     }
+    function exerciseOf(exId) {
+      return get(/databases/$(database)/documents/exercises/$(exId)).data;
+    }
     function me() {
       return get(/databases/$(database)/documents/students/$(request.auth.uid)).data;
     }
@@ -107,7 +110,34 @@ service cloud.firestore {
         && request.resource.data.status == 'submitted'
         && request.resource.data.get('marks', null) == resource.data.get('marks', null);
 
+      // पोर्टलवरील सराव: सादर करताच आपोआप गुण (प्रश्नमंजुषेप्रमाणे) — फक्त पोर्टल प्रकारांसाठी, कमाल गुणांपर्यंत.
+      // Admin ने गुण दिल्यास (auto=false) विद्यार्थी ते बदलू शकत नाही.
+      allow create, update: if isStudent() && me().active != false
+        && id == request.auth.uid + '_' + request.resource.data.exerciseId
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.batchId == me().batchId
+        && request.resource.data.status == 'evaluated'
+        && request.resource.data.auto == true
+        && exerciseOf(request.resource.data.exerciseId).get('kind', 'upload') in ['keys', 'typing', 'letter', 'writer', 'calc', 'impress', 'statement', 'email', 'mcq']
+        && request.resource.data.maxMarks == exerciseOf(request.resource.data.exerciseId).get('maxMarks', 10)
+        && request.resource.data.marks is number
+        && request.resource.data.marks >= 0
+        && request.resource.data.marks <= request.resource.data.maxMarks
+        && (resource == null || (resource.data.studentId == request.auth.uid
+            && (resource.data.status != 'evaluated' || resource.data.get('auto', false) == true)));
+
       allow write: if isAdmin();
+    }
+
+    // थेट लीडरबोर्ड: प्रत्येक विद्यार्थ्याची ओळ. विद्यार्थी फक्त स्वतःची ओळ लिहू शकतो; फक्त स्वतःच्या बॅचच्या ओळी वाचू शकतो.
+    match /boardRows/{uid} {
+      allow read: if isAdmin() || (isStudent() && resource.data.batchId == me().batchId);
+      allow write: if isAdmin();
+      allow create, update: if isStudent() && request.auth.uid == uid && me().active != false
+        && request.resource.data.batchId == me().batchId
+        && request.resource.data.keys().hasOnly(['batchId', 'name', 'total', 'max', 'evaluated', 'submitted', 'updatedAt'])
+        && request.resource.data.total is number && request.resource.data.max is number
+        && request.resource.data.total >= 0 && request.resource.data.total <= request.resource.data.max;
     }
 
     // leaderboards/{batchId} — Admin गुण दिल्यावर अद्ययावत होते
