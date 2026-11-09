@@ -363,6 +363,10 @@ tr.me td { background: #fff6ec !important; font-weight: 700; }
 .course .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 @media (max-width: 1000px) { .syl { grid-template-columns: 1fr; } .syl-col:first-child { position: static; max-height: none; } }
 
+.update-banner { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 80; display: flex; align-items: center; gap: 12px; background: var(--navy-deep); color: #fff; padding: 10px 12px 10px 18px; border-radius: 12px; box-shadow: var(--shadow-lg); max-width: calc(100vw - 24px); animation: pop 0.2s; }
+.update-banner .x { background: rgba(255, 255, 255, 0.12); color: #fff; width: 30px; height: 30px; font-size: 18px; }
+@media print { .update-banner { display: none !important; } }
+
 /* ---------- Receipt (A4 वर 2 पावत्या, प्रत्येकी A5) ---------- */
 .print-toolbar { position: sticky; top: 0; background: var(--navy-dark); color: #fff; padding: 10px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; z-index: 5; }
 .print-toolbar label { color: #fff; margin: 0; display: flex; gap: 6px; align-items: center; font-weight: 500; }
