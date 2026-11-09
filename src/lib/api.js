@@ -1,28 +1,33 @@
 import {
   addDoc, collection, doc, getDocs, increment, query, runTransaction,
-  serverTimestamp, setDoc, updateDoc, where, writeBatch, deleteDoc,
+  serverTimestamp, setDoc, updateDoc, where, writeBatch, deleteDoc, getDoc,
 } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updatePassword } from 'firebase/auth';
 import { auth, db, secondaryAuth } from '../firebase';
 import { studentEmail } from './auth';
-import { CENTER, DRIVE_SCRIPT_URL } from '../config';
+import { CENTER, DRIVE_SCRIPT_URL, STUDENT_ID_PREFIX, STUDENT_ID_START } from '../config';
 import { SEED_MODULES } from '../seed/modules';
 
 // ---------------- विद्यार्थी ----------------
+// नवीन विद्यार्थी: Student ID (PC1001…) तयार करून लॉगिन खाते + माहिती जतन
 export async function createStudent(data, password) {
+  const n = await nextNumber('studentId');
+  const loginId = `${STUDENT_ID_PREFIX}${STUDENT_ID_START + n}`;
   const sec = secondaryAuth();
-  const cred = await createUserWithEmailAndPassword(sec, studentEmail(data.mobile), password);
+  const cred = await createUserWithEmailAndPassword(sec, studentEmail(loginId), password);
   const uid = cred.user.uid;
   try {
-    const regNo = await nextNumber('registration');
-    await setDoc(doc(db, 'students', uid), {
+    const b = writeBatch(db);
+    b.set(doc(db, 'students', uid), {
       ...data,
-      loginEmail: studentEmail(data.mobile),
-      regNo: `${CENTER.receiptPrefix}-${new Date().getFullYear()}-${String(regNo).padStart(4, '0')}`,
+      loginId,
+      regNo: loginId,
       paidTotal: 0,
       active: true,
       createdAt: serverTimestamp(),
     });
+    b.set(doc(db, 'studentLogins', uid), { loginId, password, updatedAt: serverTimestamp() });
+    await b.commit();
   } catch (e) {
     // अर्धवट खाते राहू नये — लॉगिन खाते काढून टाका
     await cred.user.delete().catch(() => {});
@@ -30,7 +35,31 @@ export async function createStudent(data, password) {
   } finally {
     await signOut(sec).catch(() => {});
   }
-  return uid;
+  return { uid, loginId };
+}
+
+// विद्यार्थ्याचा सध्याचा पासवर्ड (फक्त Admin ला दिसतो)
+export async function getStudentLogin(uid) {
+  const s = await getDoc(doc(db, 'studentLogins', uid));
+  return s.exists() ? s.data() : null;
+}
+
+// Admin पासवर्ड रीसेट — जतन केलेल्या पासवर्डने secondary लॉगिन करून नवीन पासवर्ड सेट
+export async function resetStudentPassword(student, newPassword) {
+  if (String(newPassword).length < 6) throw new Error('पासवर्ड किमान 6 अक्षरांचा हवा.');
+  const login = await getStudentLogin(student.id);
+  if (!login?.password) throw new Error('या विद्यार्थ्याचा जुना पासवर्ड नोंदीत नाही.');
+  const sec = secondaryAuth();
+  try {
+    const cred = await signInWithEmailAndPassword(sec, studentEmail(student.loginId), login.password);
+    await updatePassword(cred.user, newPassword);
+  } catch (e) {
+    if (String(e.code).includes('invalid-credential')) throw new Error('नोंदीतील पासवर्ड जुळत नाही. (विद्यार्थ्याने बाहेरून बदलला असावा)');
+    throw e;
+  } finally {
+    await signOut(sec).catch(() => {});
+  }
+  await setDoc(doc(db, 'studentLogins', student.id), { loginId: student.loginId, password: newPassword, updatedAt: serverTimestamp() });
 }
 
 export const updateStudent = (id, data) => updateDoc(doc(db, 'students', id), { ...data, updatedAt: serverTimestamp() });
@@ -158,8 +187,6 @@ export async function submitExercise({ student, exercise, module, file, note }) 
   }, { merge: true });
 }
 
-export const resetStudentPassword = (uid, password) => callScript({ action: 'resetPassword', uid, password });
-export const setStudentLoginDisabled = (uid, disabled) => callScript({ action: 'setDisabled', uid, disabled });
 
 // ---------------- मूल्यांकन व लीडरबोर्ड ----------------
 export async function evaluateSubmission(sub, { marks, feedback, status }) {

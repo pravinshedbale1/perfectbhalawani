@@ -55,6 +55,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // विद्यार्थ्याचा सध्याचा पासवर्ड — फक्त Admin वाचू शकतो (पासवर्ड रीसेटसाठी).
+    // विद्यार्थी स्वतःचा पासवर्ड बदलल्यावर फक्त अद्ययावत करू शकतो (वाचू शकत नाही).
+    match /studentLogins/{uid} {
+      allow read, create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (signedIn() && request.auth.uid == uid
+            && request.resource.data.loginId == resource.data.loginId
+            && request.resource.data.keys().hasOnly(['loginId', 'password', 'updatedAt']));
+    }
+
     match /payments/{id} {
       allow read: if isAdmin() || (signedIn() && resource.data.studentId == request.auth.uid);
       allow write: if isAdmin();
@@ -74,7 +84,7 @@ service cloud.firestore {
     match /submissions/{id} {
       allow read: if isAdmin() || (signedIn() && resource.data.studentId == request.auth.uid);
 
-      allow create: if isStudent()
+      allow create: if isStudent() && me().active != false
         && id == request.auth.uid + '_' + request.resource.data.exerciseId
         && request.resource.data.studentId == request.auth.uid
         && request.resource.data.batchId == me().batchId
@@ -82,7 +92,7 @@ service cloud.firestore {
         && !('marks' in request.resource.data);
 
       // मूल्यांकन झाल्यावर विद्यार्थी बदल करू शकत नाही (Admin ने 'redo' केल्यास पुन्हा करू शकतो)
-      allow update: if isStudent()
+      allow update: if isStudent() && me().active != false
         && resource.data.studentId == request.auth.uid
         && resource.data.status != 'evaluated'
         && request.resource.data.studentId == request.auth.uid

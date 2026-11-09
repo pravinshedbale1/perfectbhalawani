@@ -23,7 +23,7 @@ export default function Fees() {
   const matches = useMemo(() => {
     const t = q.trim().toLowerCase();
     if (!t) return [];
-    return students.data.filter((s) => [s.name, s.mobile, s.regNo].some((x) => String(x || '').toLowerCase().includes(t))).sort(byText('name')).slice(0, 8);
+    return students.data.filter((s) => [s.name, s.mobile, s.loginId].some((x) => String(x || '').toLowerCase().includes(t))).sort(byText('name')).slice(0, 8);
   }, [q, students.data]);
 
   const list = useMemo(() =>
@@ -78,7 +78,7 @@ export default function Fees() {
             </div>
           ) : (
             <>
-              <input placeholder="🔍 नाव / मोबाईल / नोंदणी क्र." value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+              <input placeholder="🔍 नाव / Student ID / मोबाईल" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
               {matches.map((s) => (
                 <div key={s.id} className="ex-row" onClick={() => { setParams({ student: s.id }); setQ(''); setLastId(''); }}>
                   <div><b>{s.name}</b><div className="small muted">{s.batchName} · {s.mobile}</div></div>

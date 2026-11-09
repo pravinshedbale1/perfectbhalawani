@@ -3,6 +3,7 @@ import { Modal, Field, Alert } from './ui';
 import { createStudent, updateStudent, recomputeLeaderboard } from '../lib/api';
 import { authErrorMr } from '../lib/auth';
 import { todayISO } from '../lib/format';
+import { DEFAULT_STUDENT_PASSWORD } from '../config';
 
 const blank = {
   name: '', mobile: '', email: '', gender: '', dob: '', parentName: '', parentMobile: '',
@@ -12,7 +13,7 @@ const blank = {
 export default function StudentForm({ student, batches, onClose, onSaved, defaultBatch }) {
   const isNew = !student?.id;
   const [f, setF] = useState(() => (isNew ? { ...blank, batchId: defaultBatch || '' } : { ...blank, ...student }));
-  const [pw, setPw] = useState('');
+  const [pw, setPw] = useState(DEFAULT_STUDENT_PASSWORD);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState(null);
@@ -29,15 +30,15 @@ export default function StudentForm({ student, batches, onClose, onSaved, defaul
     if (!/^\d{10}$/.test(f.mobile)) return setErr('मोबाईल नंबर 10 अंकी असावा.');
     const b = batches.find((x) => x.id === f.batchId);
     if (!b) return setErr('कृपया बॅच निवडा.');
-    const password = pw || `pc${f.mobile.slice(-4)}`;
+    const password = pw || DEFAULT_STUDENT_PASSWORD;
     if (isNew && password.length < 6) return setErr('पासवर्ड किमान 6 अक्षरांचा हवा.');
-    const { id, createdAt, updatedAt, paidTotal, regNo, loginEmail, active, ...rest } = f;
+    const { id, createdAt, updatedAt, paidTotal, regNo, loginId, loginEmail, active, ...rest } = f;
     const data = { ...rest, name: f.name.trim(), batchName: b.name, course: b.course || '', totalFee: Number(f.totalFee || 0) };
     setBusy(true);
     try {
       if (isNew) {
-        await createStudent(data, password);
-        setCreated({ mobile: f.mobile, password });
+        const r = await createStudent(data, password);
+        setCreated({ loginId: r.loginId, name: data.name, password });
       } else {
         await updateStudent(student.id, data);
         if (student.batchId !== f.batchId) {
@@ -59,12 +60,13 @@ export default function StudentForm({ student, batches, onClose, onSaved, defaul
         <p>विद्यार्थ्याला खालील लॉगिन माहिती द्या:</p>
         <div className="target-box">
           <div>संकेतस्थळ: <b>perfectbhalawani.in</b></div>
-          <div>मोबाईल (Login ID): <b>{created.mobile}</b></div>
+          <div>नाव: <b>{created.name}</b></div>
+          <div>Student ID: <b style={{ fontSize: 20 }}>{created.loginId}</b></div>
           <div>पासवर्ड: <b>{created.password}</b></div>
         </div>
         <p className="small muted">विद्यार्थी लॉगिननंतर "माझी माहिती" मधून पासवर्ड बदलू शकतो.</p>
         <div className="actions">
-          <button className="btn light" onClick={() => navigator.clipboard?.writeText(`परफेक्ट कॉम्प्युटर्स, भाळवणी\nलॉगिन: https://perfectbhalawani.in/login\nमोबाईल: ${created.mobile}\nपासवर्ड: ${created.password}`)}>📋 कॉपी करा</button>
+          <button className="btn light" onClick={() => navigator.clipboard?.writeText(`परफेक्ट कॉम्प्युटर्स, भाळवणी\nलॉगिन: https://perfectbhalawani.in/login\nStudent ID: ${created.loginId}\nपासवर्ड: ${created.password}`)}>📋 कॉपी करा</button>
           <button className="btn" onClick={() => { onSaved?.(); onClose(); }}>ठीक आहे</button>
         </div>
       </Modal>
@@ -76,10 +78,10 @@ export default function StudentForm({ student, batches, onClose, onSaved, defaul
       <form onSubmit={submit}>
         <div className="form-grid">
           <Field label="विद्यार्थ्याचे पूर्ण नाव" required><input value={f.name} onChange={set('name')} required placeholder="आडनाव नाव वडिलांचे नाव" /></Field>
-          <Field label="मोबाईल नंबर (Login ID)" required>
-            <input inputMode="numeric" maxLength={10} value={f.mobile} disabled={!isNew}
+          <Field label="मोबाईल नंबर" required>
+            <input inputMode="numeric" maxLength={10} value={f.mobile}
               onChange={(e) => setF({ ...f, mobile: e.target.value.replace(/\D/g, '') })} required />
-            {!isNew && <small className="muted">लॉगिन मोबाईल बदलता येत नाही.</small>}
+            {!isNew && <small className="muted">Student ID: <b>{student.loginId}</b></small>}
           </Field>
           <Field label="बॅच" required>
             <select value={f.batchId} onChange={pickBatch} required>
@@ -103,8 +105,9 @@ export default function StudentForm({ student, batches, onClose, onSaved, defaul
           <Field label="पत्ता" full><textarea value={f.address} onChange={set('address')} rows={2} /></Field>
           <Field label="टीप" full><input value={f.notes} onChange={set('notes')} /></Field>
           {isNew && (
-            <Field label="लॉगिन पासवर्ड" full>
-              <input value={pw} onChange={(e) => setPw(e.target.value)} placeholder={`रिकामे ठेवल्यास: pc${(f.mobile || '0000').slice(-4)}`} />
+            <Field label="लॉगिन पासवर्ड (डीफॉल्ट)" full>
+              <input value={pw} minLength={6} onChange={(e) => setPw(e.target.value)} />
+              <small className="muted">Student ID (उदा. PC1001) नोंदणीनंतर आपोआप तयार होईल.</small>
             </Field>
           )}
         </div>

@@ -46,7 +46,7 @@ export default function Login() {
             <li>🏆 बॅचमधील लीडरबोर्ड</li>
             <li>💰 फी भरणा तपशील</li>
           </ul>
-          <p className="small" style={{ color: '#a9bdd8' }}>लॉगिन माहिती संस्थेकडून दिली जाते.</p>
+          <p className="small" style={{ color: '#a9bdd8' }}>Student ID व पासवर्ड संस्थेकडून प्रवेशाच्या वेळी दिला जातो.</p>
         </div>
         <form className="login-form" onSubmit={submit}>
           <div className="tabs">
@@ -56,13 +56,13 @@ export default function Login() {
           {noRole && <Alert>हे खाते कोणत्याही विद्यार्थी/Admin शी जोडलेले नाही. <a href="#" onClick={(e) => { e.preventDefault(); auth.logout(); }}>बाहेर पडा</a></Alert>}
           {mode === 'student' ? (
             <>
-              <label className="req">मोबाईल नंबर</label>
-              <input inputMode="numeric" maxLength={10} value={id} onChange={(e) => setId(e.target.value.replace(/\D/g, ''))} placeholder="10 अंकी मोबाईल नंबर" required />
+              <label className="req">Student ID</label>
+              <input value={id} onChange={(e) => setId(e.target.value.toUpperCase())} placeholder="उदा. PC1001" autoCapitalize="characters" required />
             </>
           ) : (
             <>
-              <label className="req">ईमेल</label>
-              <input type="email" value={id} onChange={(e) => setId(e.target.value)} placeholder="admin@example.com" required />
+              <label className="req">Admin ID</label>
+              <input value={id} onChange={(e) => setId(e.target.value)} placeholder="admin" autoCapitalize="none" required />
             </>
           )}
           <label className="req">पासवर्ड</label>

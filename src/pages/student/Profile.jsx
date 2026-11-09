@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
-import { auth } from '../../firebase';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { auth, db } from '../../firebase';
 import { useAuth, authErrorMr } from '../../lib/auth';
 import { Alert } from '../../components/ui';
 import { fmtDate } from '../../lib/format';
@@ -21,6 +22,7 @@ export default function StudentProfile() {
       const u = auth.currentUser;
       await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, f.old));
       await updatePassword(u, f.pw);
+      await setDoc(doc(db, 'studentLogins', u.uid), { loginId: s.loginId, password: f.pw, updatedAt: serverTimestamp() }).catch(() => {});
       setF({ old: '', pw: '', pw2: '' });
       setMsg({ ok: 'पासवर्ड बदलला ✅' });
     } catch (e2) { setMsg({ err: authErrorMr(e2) }); }
@@ -28,7 +30,7 @@ export default function StudentProfile() {
   };
 
   const rows = [
-    ['नोंदणी क्र.', s.regNo], ['नाव', s.name], ['मोबाईल', s.mobile], ['ईमेल', s.email], ['बॅच', s.batchName],
+    ['Student ID', s.loginId], ['नाव', s.name], ['मोबाईल', s.mobile], ['ईमेल', s.email], ['बॅच', s.batchName],
     ['अभ्यासक्रम', s.course], ['प्रवेश दिनांक', fmtDate(s.admissionDate)], ['जन्मतारीख', fmtDate(s.dob)],
     ['शाळा / महाविद्यालय', s.school], ['इयत्ता', s.standard], ['पालक', s.parentName], ['पत्ता', s.address],
   ];

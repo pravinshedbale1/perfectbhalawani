@@ -29,7 +29,7 @@ export default function Receipt({ p, copyLabel }) {
       <div className="rcpt-lines">
         <div className="rcpt-line"><span className="k">श्री./कु.</span><span className="v">{p.studentName}</span></div>
         <div className="row" style={{ gap: '4mm', flexWrap: 'nowrap' }}>
-          <div className="rcpt-line" style={{ flex: 1 }}><span className="k">नोंदणी क्र.</span><span className="v">{p.regNo}</span></div>
+          <div className="rcpt-line" style={{ flex: 1 }}><span className="k">Student ID</span><span className="v">{p.regNo}</span></div>
           <div className="rcpt-line" style={{ flex: 1 }}><span className="k">मोबाईल</span><span className="v">{p.mobile}</span></div>
         </div>
         <div className="row" style={{ gap: '4mm', flexWrap: 'nowrap' }}>

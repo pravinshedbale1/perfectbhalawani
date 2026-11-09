@@ -16,8 +16,7 @@
    |---|---|
    | `FIREBASE_API_KEY` | `src/config.js` मधील `apiKey` |
    | `FIREBASE_PROJECT` | `perfect-bhalawani` |
-   | `ADMIN_EMAILS` | Admin लॉगिन ईमेल (एकापेक्षा जास्त असल्यास comma ने) |
-5. Editor मध्ये function `authorize` निवडा → **Run** → परवानग्या **Allow** करा
+   5. Editor मध्ये function `authorize` निवडा → **Run** → परवानग्या **Allow** करा
    ("Google hasn't verified this app" आल्यास → Advanced → Go to … (unsafe) → Allow — हे तुमचेच script आहे).
 6. **Deploy → New deployment** → प्रकार ⚙️ **Web app**
    - Execute as: **Me**
@@ -33,5 +32,3 @@
 
 ### सुविधा
 - `upload` — विद्यार्थी फाइल अपलोड (Firebase लॉगिन token तपासून, कमाल 10 MB)
-- `resetPassword` — Admin विद्यार्थ्याचा पासवर्ड रीसेट करू शकतो
-- `setDisabled` — विद्यार्थी निष्क्रिय केल्यावर लॉगिन बंद

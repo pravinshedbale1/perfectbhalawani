@@ -2,12 +2,13 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, isConfigured } from '../firebase';
-import { STUDENT_EMAIL_DOMAIN } from '../config';
+import { STUDENT_EMAIL_DOMAIN, ADMIN_EMAIL_DOMAIN } from '../config';
 
 const Ctx = createContext(null);
 export const useAuth = () => useContext(Ctx);
 
-export const studentEmail = (mobile) => `${String(mobile).replace(/\D/g, '')}@${STUDENT_EMAIL_DOMAIN}`;
+export const studentEmail = (loginId) => `${String(loginId).trim().toLowerCase().replace(/[^a-z0-9]/g, '')}@${STUDENT_EMAIL_DOMAIN}`;
+export const adminEmail = (id) => (String(id).includes('@') ? String(id).trim() : `${String(id).trim().toLowerCase()}@${ADMIN_EMAIL_DOMAIN}`);
 
 export function AuthProvider({ children }) {
   const [state, setState] = useState({ loading: true, user: null, role: null, profile: null });
@@ -33,8 +34,8 @@ export function AuthProvider({ children }) {
   const value = {
     ...state,
     refresh: () => loadRole(auth.currentUser),
-    loginAdmin: (email, pw) => signInWithEmailAndPassword(auth, email.trim(), pw),
-    loginStudent: (mobile, pw) => signInWithEmailAndPassword(auth, studentEmail(mobile), pw),
+    loginAdmin: (id, pw) => signInWithEmailAndPassword(auth, adminEmail(id), pw),
+    loginStudent: (loginId, pw) => signInWithEmailAndPassword(auth, studentEmail(loginId), pw),
     logout: () => signOut(auth),
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -43,9 +44,9 @@ export function AuthProvider({ children }) {
 export function authErrorMr(e) {
   const c = e?.code || '';
   if (c.includes('invalid-credential') || c.includes('wrong-password') || c.includes('user-not-found'))
-    return 'मोबाईल/ईमेल किंवा पासवर्ड चुकीचा आहे.';
+    return 'ID किंवा पासवर्ड चुकीचा आहे.';
   if (c.includes('too-many-requests')) return 'खूप प्रयत्न झाले. थोड्या वेळाने पुन्हा प्रयत्न करा.';
-  if (c.includes('email-already-in-use')) return 'हा मोबाईल नंबर/ईमेल आधीच नोंदणीकृत आहे.';
+  if (c.includes('email-already-in-use')) return 'हा ID आधीच नोंदणीकृत आहे.';
   if (c.includes('weak-password')) return 'पासवर्ड किमान 6 अक्षरांचा हवा.';
   if (c.includes('network')) return 'इंटरनेट कनेक्शन तपासा.';
   if (c.includes('permission-denied')) return 'परवानगी नाही (Firestore rules तपासा).';

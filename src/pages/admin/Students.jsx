@@ -19,7 +19,7 @@ export default function Students() {
     return students.data
       .filter((s) => !batch || s.batchId === batch)
       .filter((s) => status === 'all' || (status === 'active' ? s.active !== false : s.active === false))
-      .filter((s) => !t || [s.name, s.mobile, s.regNo, s.school].some((x) => String(x || '').toLowerCase().includes(t)))
+      .filter((s) => !t || [s.name, s.mobile, s.loginId, s.school].some((x) => String(x || '').toLowerCase().includes(t)))
       .sort(byText('name'));
   }, [students.data, q, batch, status]);
 
@@ -32,7 +32,7 @@ export default function Students() {
         <button className="btn saffron" onClick={() => setForm({})}>+ नवीन विद्यार्थी</button>
       </div>
       <div className="toolbar">
-        <input placeholder="🔍 नाव / मोबाईल / नोंदणी क्र. शोधा" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input placeholder="🔍 नाव / Student ID / मोबाईल शोधा" value={q} onChange={(e) => setQ(e.target.value)} />
         <select value={batch} onChange={(e) => setParams(e.target.value ? { batch: e.target.value } : {})}>
           <option value="">सर्व बॅच</option>
           {batches.data.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -44,13 +44,13 @@ export default function Students() {
       {list.length ? (
         <div className="table-wrap">
           <table>
-            <thead><tr><th>नोंदणी क्र.</th><th>नाव</th><th>मोबाईल</th><th>बॅच</th><th className="num">एकूण फी</th><th className="num">जमा</th><th className="num">बाकी</th><th></th></tr></thead>
+            <thead><tr><th>Student ID</th><th>नाव</th><th>मोबाईल</th><th>बॅच</th><th className="num">एकूण फी</th><th className="num">जमा</th><th className="num">बाकी</th><th></th></tr></thead>
             <tbody>
               {list.map((s) => {
                 const due = Number(s.totalFee || 0) - Number(s.paidTotal || 0);
                 return (
                   <tr key={s.id}>
-                    <td className="small nowrap">{s.regNo}</td>
+                    <td className="nowrap"><b>{s.loginId}</b></td>
                     <td><Link to={`/admin/students/${s.id}`}><b>{s.name}</b></Link>{s.school && <div className="small muted">{s.school}</div>}</td>
                     <td>{s.mobile}</td>
                     <td className="small">{s.batchName}</td>

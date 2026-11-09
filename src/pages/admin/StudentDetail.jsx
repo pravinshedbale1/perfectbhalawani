@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCollection, useDocument } from '../../lib/useData';
-import { resetStudentPassword, setStudentLoginDisabled, updateStudent, recomputeLeaderboard, driveConfigured } from '../../lib/api';
+import { resetStudentPassword, getStudentLogin, updateStudent, recomputeLeaderboard } from '../../lib/api';
+import { DEFAULT_STUDENT_PASSWORD } from '../../config';
 import StudentForm from '../../components/StudentForm';
 import { Spinner, StatusBadge, Modal, Alert } from '../../components/ui';
 import { money, fmtDate, byTimeDesc } from '../../lib/format';
@@ -16,6 +17,8 @@ export default function StudentDetail() {
   const [pwOpen, setPwOpen] = useState(false);
   const [pw, setPw] = useState('');
   const [msg, setMsg] = useState({});
+  const [current, setCurrent] = useState('');
+  const [busy, setBusy] = useState(false);
 
   if (st.loading) return <Spinner />;
   const s = st.data;
@@ -30,7 +33,6 @@ export default function StudentDetail() {
     const next = s.active === false;
     if (!confirm(next ? 'विद्यार्थी पुन्हा सक्रिय करायचा?' : 'विद्यार्थी निष्क्रिय करायचा? (लॉगिन बंद होईल)')) return;
     await updateStudent(id, { active: next });
-    if (driveConfigured()) await setStudentLoginDisabled(id, !next).catch((e) => alert('लॉगिन स्थिती बदलता आली नाही: ' + e.message));
     await recomputeLeaderboard(s.batchId);
     st.reload();
   };
@@ -38,10 +40,19 @@ export default function StudentDetail() {
   const doReset = async (e) => {
     e.preventDefault();
     setMsg({});
+    setBusy(true);
     try {
-      await resetStudentPassword(id, pw);
+      await resetStudentPassword(s, pw);
+      setCurrent(pw);
       setMsg({ ok: `नवीन पासवर्ड सेट झाला: ${pw}` });
     } catch (e2) { setMsg({ err: e2.message }); }
+    finally { setBusy(false); }
+  };
+
+  const openReset = async () => {
+    setPw(DEFAULT_STUDENT_PASSWORD); setMsg({}); setCurrent('…'); setPwOpen(true);
+    const l = await getStudentLogin(id).catch(() => null);
+    setCurrent(l?.password || '(नोंद नाही)');
   };
 
   const Info = ({ k, v }) => <div className="small" style={{ padding: '4px 0', borderBottom: '1px dashed var(--line)' }}><span className="muted">{k}:</span> <b>{v || '-'}</b></div>;
@@ -53,7 +64,7 @@ export default function StudentDetail() {
         <div className="row">
           <Link className="btn saffron" to={`/admin/fees?student=${id}`}>💰 फी जमा</Link>
           <button className="btn" onClick={() => setEdit(true)}>संपादन</button>
-          <button className="btn light" onClick={() => { setPw(`pc${String(s.mobile).slice(-4)}`); setMsg({}); setPwOpen(true); }}>🔑 पासवर्ड रीसेट</button>
+          <button className="btn light" onClick={openReset}>🔑 पासवर्ड / रीसेट</button>
           <button className={'btn ' + (s.active === false ? 'green' : 'red')} onClick={toggleActive}>{s.active === false ? 'सक्रिय करा' : 'निष्क्रिय करा'}</button>
         </div>
       </div>
@@ -61,8 +72,8 @@ export default function StudentDetail() {
       <div className="grid g3">
         <div className="card">
           <h3>वैयक्तिक माहिती</h3>
-          <Info k="नोंदणी क्र." v={s.regNo} />
-          <Info k="मोबाईल (Login)" v={s.mobile} />
+          <Info k="Student ID" v={s.loginId} />
+          <Info k="मोबाईल" v={s.mobile} />
           <Info k="ईमेल" v={s.email} />
           <Info k="जन्मतारीख" v={fmtDate(s.dob)} />
           <Info k="लिंग" v={s.gender} />
@@ -123,13 +134,16 @@ export default function StudentDetail() {
 
       {edit && <StudentForm student={s} batches={batches.data} onClose={() => setEdit(false)} onSaved={st.reload} />}
       {pwOpen && (
-        <Modal title="पासवर्ड रीसेट" onClose={() => setPwOpen(false)}>
-          {!driveConfigured() && <Alert type="info">पासवर्ड रीसेटसाठी Apps Script सेटअप आवश्यक आहे (apps-script/README.md).</Alert>}
+        <Modal title={`लॉगिन माहिती — ${s.name}`} onClose={() => setPwOpen(false)}>
+          <div className="target-box">
+            <div>Student ID: <b>{s.loginId}</b></div>
+            <div>सध्याचा पासवर्ड: <b>{current}</b></div>
+          </div>
           <form onSubmit={doReset}>
             <label>नवीन पासवर्ड (किमान 6 अक्षरे)</label>
             <input value={pw} minLength={6} onChange={(e) => setPw(e.target.value)} required />
             <Alert>{msg.err}</Alert><Alert type="ok">{msg.ok}</Alert>
-            <div className="actions"><button className="btn" disabled={!driveConfigured()}>रीसेट करा</button></div>
+            <div className="actions"><button className="btn" disabled={busy}>{busy ? 'कृपया थांबा…' : 'पासवर्ड रीसेट करा'}</button></div>
           </form>
         </Modal>
       )}

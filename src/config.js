@@ -16,8 +16,15 @@ export const FIREBASE_CONFIG = {
 // Google Apps Script Web App URL (apps-script/README.md पहा)
 export const DRIVE_SCRIPT_URL = 'PASTE_APPS_SCRIPT_WEB_APP_URL';
 
-// विद्यार्थी लॉगिनसाठी अंतर्गत ईमेल डोमेन (विद्यार्थ्यांना ईमेलची गरज नाही — मोबाईल नंबरने लॉगिन)
+// लॉगिन व्यवस्था (Google login नाही):
+//  • Admin: Admin ID (उदा. "admin") + पासवर्ड  → अंतर्गत ईमेल admin@perfectbhalawani.in
+//  • विद्यार्थी: Student ID (उदा. PC1001) + पासवर्ड → अंतर्गत ईमेल pc1001@students.perfectbhalawani.in
+export const ADMIN_EMAIL_DOMAIN = 'perfectbhalawani.in';
 export const STUDENT_EMAIL_DOMAIN = 'students.perfectbhalawani.in';
+export const STUDENT_ID_PREFIX = 'PC';
+export const STUDENT_ID_START = 1000; // पहिला विद्यार्थी = PC1001
+// नोंदणीवेळी व रीसेटवेळी वापरला जाणारा डीफॉल्ट पासवर्ड (किमान 6 अक्षरे)
+export const DEFAULT_STUDENT_PASSWORD = 'Perfect@123';
 
 export const CENTER = {
   nameMr: 'परफेक्ट कॉम्प्युटर्स',
