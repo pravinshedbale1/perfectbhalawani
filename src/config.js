@@ -5,12 +5,12 @@
 // Firebase Console → Project settings (⚙️) → General → "Your apps" → Web app → SDK setup → Config
 // येथील मूल्ये खाली पेस्ट करा. (ही माहिती सार्वजनिक असते; सुरक्षा firestore.rules मधून होते.)
 export const FIREBASE_CONFIG = {
-  apiKey: 'PASTE_API_KEY',
+  apiKey: 'AIzaSyBNUgLVzlrKBQ8eecJGWxtkTcUN4JX6e1w',
   authDomain: 'perfect-bhalawani.firebaseapp.com',
   projectId: 'perfect-bhalawani',
   storageBucket: 'perfect-bhalawani.firebasestorage.app',
-  messagingSenderId: 'PASTE_SENDER_ID',
-  appId: 'PASTE_APP_ID',
+  messagingSenderId: '336491553391',
+  appId: '1:336491553391:web:062f8a7311ead126e5e39a',
 };
 
 // Google Apps Script Web App URL (apps-script/README.md पहा)
