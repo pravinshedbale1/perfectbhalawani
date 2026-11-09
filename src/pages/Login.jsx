@@ -1,0 +1,77 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth, authErrorMr } from '../lib/auth';
+import { Alert } from '../components/ui';
+
+export default function Login() {
+  const [params] = useSearchParams();
+  const [mode, setMode] = useState(params.get('admin') ? 'admin' : 'student');
+  const [id, setId] = useState('');
+  const [pw, setPw] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const auth = useAuth();
+  const nav = useNavigate();
+
+  useEffect(() => {
+    if (auth.role === 'admin') nav('/admin', { replace: true });
+    if (auth.role === 'student') nav('/student', { replace: true });
+  }, [auth.role, nav]);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr('');
+    setBusy(true);
+    try {
+      if (mode === 'admin') await auth.loginAdmin(id, pw);
+      else await auth.loginStudent(id, pw);
+    } catch (e2) {
+      setErr(authErrorMr(e2));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const noRole = auth.user && !auth.loading && !auth.role;
+
+  return (
+    <div className="page">
+      <div className="login-wrap">
+        <div className="login-side">
+          <h2>ऑनलाइन शिक्षण पोर्टल</h2>
+          <ul>
+            <li>📚 मॉड्यूलनिहाय सराव व त्यांची माहिती</li>
+            <li>📤 सराव फाइल (Word/Excel/PDF/फोटो) अपलोड</li>
+            <li>📊 गुण व शिक्षकांचा अभिप्राय</li>
+            <li>🏆 बॅचमधील लीडरबोर्ड</li>
+            <li>💰 फी भरणा तपशील</li>
+          </ul>
+          <p className="small" style={{ color: '#a9bdd8' }}>लॉगिन माहिती संस्थेकडून दिली जाते.</p>
+        </div>
+        <form className="login-form" onSubmit={submit}>
+          <div className="tabs">
+            <button type="button" className={mode === 'student' ? 'on' : ''} onClick={() => { setMode('student'); setErr(''); }}>👨‍🎓 विद्यार्थी</button>
+            <button type="button" className={mode === 'admin' ? 'on' : ''} onClick={() => { setMode('admin'); setErr(''); }}>🔐 Admin</button>
+          </div>
+          {noRole && <Alert>हे खाते कोणत्याही विद्यार्थी/Admin शी जोडलेले नाही. <a href="#" onClick={(e) => { e.preventDefault(); auth.logout(); }}>बाहेर पडा</a></Alert>}
+          {mode === 'student' ? (
+            <>
+              <label className="req">मोबाईल नंबर</label>
+              <input inputMode="numeric" maxLength={10} value={id} onChange={(e) => setId(e.target.value.replace(/\D/g, ''))} placeholder="10 अंकी मोबाईल नंबर" required />
+            </>
+          ) : (
+            <>
+              <label className="req">ईमेल</label>
+              <input type="email" value={id} onChange={(e) => setId(e.target.value)} placeholder="admin@example.com" required />
+            </>
+          )}
+          <label className="req">पासवर्ड</label>
+          <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} required />
+          <Alert>{err}</Alert>
+          <button className="btn block mt" disabled={busy}>{busy ? 'कृपया थांबा…' : 'लॉगिन करा'}</button>
+          {mode === 'student' && <p className="small muted mt">पासवर्ड विसरलात? कृपया संस्थेशी संपर्क साधा.</p>}
+        </form>
+      </div>
+    </div>
+  );
+}

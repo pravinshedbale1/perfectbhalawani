@@ -1,0 +1,103 @@
+rules_version = '2';
+
+// परफेक्ट कॉम्प्युटर्स — Firestore सुरक्षा नियम
+// Firebase Console → Firestore Database → Rules येथे हे पेस्ट करून Publish करा.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function isStudent() {
+      return signedIn() && exists(/databases/$(database)/documents/students/$(request.auth.uid));
+    }
+    function me() {
+      return get(/databases/$(database)/documents/students/$(request.auth.uid)).data;
+    }
+
+    // ---- पहिला Admin (फक्त एकदाच, /setup पानावरून) ----
+    match /config/bootstrap {
+      allow read: if true;
+      allow create: if signedIn()
+        && !exists(/databases/$(database)/documents/config/bootstrap)
+        && existsAfter(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow update, delete: if false;
+    }
+
+    match /admins/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if isAdmin()
+        || (signedIn() && request.auth.uid == uid
+            && !exists(/databases/$(database)/documents/config/bootstrap)
+            && existsAfter(/databases/$(database)/documents/config/bootstrap));
+      allow update, delete: if isAdmin();
+    }
+
+    // ---- सार्वजनिक सूचना फलक ----
+    match /notices/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- पावती क्रमांक इ. ----
+    match /counters/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /batches/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /students/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow write: if isAdmin();
+    }
+
+    match /payments/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.studentId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    match /modules/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /exercises/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // submissions/{studentUid}_{exerciseId}
+    match /submissions/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.studentId == request.auth.uid);
+
+      allow create: if isStudent()
+        && id == request.auth.uid + '_' + request.resource.data.exerciseId
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.batchId == me().batchId
+        && request.resource.data.status == 'submitted'
+        && !('marks' in request.resource.data);
+
+      // मूल्यांकन झाल्यावर विद्यार्थी बदल करू शकत नाही (Admin ने 'redo' केल्यास पुन्हा करू शकतो)
+      allow update: if isStudent()
+        && resource.data.studentId == request.auth.uid
+        && resource.data.status != 'evaluated'
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.exerciseId == resource.data.exerciseId
+        && request.resource.data.batchId == me().batchId
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.get('marks', null) == resource.data.get('marks', null);
+
+      allow write: if isAdmin();
+    }
+
+    // leaderboards/{batchId} — Admin गुण दिल्यावर अद्ययावत होते
+    match /leaderboards/{batchId} {
+      allow read: if isAdmin() || (isStudent() && me().batchId == batchId);
+      allow write: if isAdmin();
+    }
+  }
+}
