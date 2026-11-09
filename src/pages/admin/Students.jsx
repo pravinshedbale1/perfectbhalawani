@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCollection } from '../../lib/useData';
 import StudentForm from '../../components/StudentForm';
+import BulkImport from '../../components/BulkImport';
 import { Spinner, Empty } from '../../components/ui';
 import { money, byText } from '../../lib/format';
 
@@ -12,6 +13,7 @@ export default function Students() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('active');
   const [form, setForm] = useState(params.get('new') ? {} : null);
+  const [bulk, setBulk] = useState(false);
   const batch = params.get('batch') || '';
 
   const list = useMemo(() => {
@@ -29,7 +31,10 @@ export default function Students() {
     <>
       <div className="page-head">
         <h1>विद्यार्थी ({list.length})</h1>
-        <button className="btn saffron" onClick={() => setForm({})}>+ नवीन विद्यार्थी</button>
+        <div className="row">
+          <button className="btn light" onClick={() => setBulk(true)}>📥 Excel मधून नोंदणी</button>
+          <button className="btn saffron" onClick={() => setForm({})}>+ नवीन विद्यार्थी</button>
+        </div>
       </div>
       <div className="toolbar">
         <input placeholder="🔍 नाव / Student ID / मोबाईल शोधा" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -69,6 +74,7 @@ export default function Students() {
         </div>
       ) : <Empty>विद्यार्थी सापडले नाहीत.</Empty>}
 
+      {bulk && <BulkImport batches={batches.data} students={students.data} onClose={() => setBulk(false)} onDone={students.reload} />}
       {form && <StudentForm student={form} batches={batches.data} defaultBatch={batch} onClose={() => { setForm(null); if (params.get('new')) setParams({}); }} onSaved={students.reload} />}
     </>
   );

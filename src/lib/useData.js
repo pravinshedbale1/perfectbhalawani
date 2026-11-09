@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -7,8 +7,11 @@ export function useCollection(name, filters = [], deps = []) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const lastKey = useRef(null);
   const load = useCallback(async () => {
-    setLoading(true);
+    // spinner फक्त पहिल्यांदा / query बदलल्यावर — reload वेळी जुना डेटा दिसत राहतो (modal बंद होत नाहीत)
+    const key = name + JSON.stringify(filters);
+    if (lastKey.current !== key) { setLoading(true); lastKey.current = key; }
     try {
       // कोणत्याही filter चे मूल्य रिकामे असल्यास query करू नका
       if (filters.some((f) => f[2] === undefined || f[2] === null || f[2] === '')) {
@@ -34,9 +37,10 @@ export function useCollection(name, filters = [], deps = []) {
 export function useDocument(path, id) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const lastKey = useRef(null);
   const load = useCallback(async () => {
     if (!id) { setData(null); setLoading(false); return; }
-    setLoading(true);
+    if (lastKey.current !== path + '/' + id) { setLoading(true); lastKey.current = path + '/' + id; }
     try {
       const s = await getDoc(doc(db, path, id));
       setData(s.exists() ? { id: s.id, ...s.data() } : null);

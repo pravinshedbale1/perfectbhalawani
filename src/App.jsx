@@ -15,6 +15,7 @@ import Submissions from './pages/admin/Submissions';
 import AdminLeaderboard from './pages/admin/Leaderboard';
 import Notices from './pages/admin/Notices';
 import Settings from './pages/admin/Settings';
+import Backup from './pages/admin/Backup';
 import StudentHome from './pages/student/Home';
 import StudentExercises from './pages/student/Exercises';
 import StudentResults from './pages/student/Results';
@@ -31,6 +32,7 @@ const adminLinks = [
   { to: '/admin/submissions', icon: '📝', label: 'मूल्यांकन' },
   { to: '/admin/leaderboard', icon: '🏆', label: 'लीडरबोर्ड' },
   { to: '/admin/notices', icon: '📢', label: 'सूचना फलक' },
+  { to: '/admin/backup', icon: '💾', label: 'डेटा बॅकअप' },
   { to: '/admin/settings', icon: '⚙️', label: 'सेटिंग्ज' },
 ];
 
@@ -72,6 +74,7 @@ export default function App() {
         <Route path="leaderboard" element={<AdminLeaderboard />} />
         <Route path="notices" element={<Notices />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="backup" element={<Backup />} />
       </Route>
 
       <Route path="/student" element={<DashLayout role="student" links={studentLinks} />}>
