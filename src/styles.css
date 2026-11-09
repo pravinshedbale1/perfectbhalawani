@@ -540,6 +540,7 @@ tr.me td { background: #fff6ec !important; font-weight: 700; }
 .w.bad { color: #b91c1c; background: #fee2e2; }
 .w.miss { background: #fde68a; text-decoration: line-through; }
 .w.cur { background: #bfdbfe; }
+.w.cur.off { background: #fecaca; box-shadow: inset 0 -2px 0 #dc2626; }
 .word-input { flex: 1; border: 0; outline: 0; resize: none; font: inherit; line-height: inherit; padding: 0; min-height: 60vh; background: transparent; }
 .word-input.mr, textarea.mr { font-family: "Noto Sans Devanagari", sans-serif; }
 .word-status { position: sticky; bottom: 0; background: #1f4e96; color: #fff; font-size: 13px; padding: 5px 14px; }

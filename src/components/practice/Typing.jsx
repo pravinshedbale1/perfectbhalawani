@@ -97,7 +97,11 @@ export function PassagePractice({ ex, canSubmit, onSubmit, onExit }) {
   const curRef = useRef(null);
   const clock = useClock(limit, () => done(typedRef.current));
 
-  const cmp = useMemo(() => compareWords(ref, words(typed), { partial: true }), [ref, typed]);
+  // शेवटचा शब्द अजून टाइप होत असल्यास (space नाही) तो तपासत नाही
+  const inWord = typed.length > 0 && !/\s$/.test(typed);
+  const cmp = useMemo(() => compareWords(ref, words(typed), { partial: true, typing: inWord }), [ref, typed, inWord]);
+  const curWord = inWord ? words(typed).slice(-1)[0] : '';
+  const curOff = curWord && !(ref[cmp.next] || '').startsWith(curWord);
   const secs = Math.max(1, clock.sec);
   const wpm = clock.sec ? wpmOf(typed.trim().length, secs) : 0;
 
@@ -137,7 +141,7 @@ export function PassagePractice({ ex, canSubmit, onSubmit, onExit }) {
           <div className="word-label">मूळ परिच्छेद</div>
           {paras.map((p, pi) => (
             <p key={pi}>{p.map(({ w, i }) => (
-              <span key={i} ref={i === cmp.next ? curRef : null} className={'w ' + (cmp.status[i] || (i === cmp.next ? 'cur' : ''))}>{w} </span>
+              <span key={i} ref={i === cmp.next ? curRef : null} className={'w ' + (cmp.status[i] || (i === cmp.next ? (curOff ? 'cur off' : 'cur') : ''))}>{w} </span>
             ))}</p>
           ))}
         </div>

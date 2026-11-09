@@ -30,8 +30,9 @@ export function htmlText(html) {
 
 // शब्दानुसार तुलना (LCS). परत: ref चा प्रत्येक शब्द ok/bad/miss, चुकीचे/गाळलेले/जास्त शब्द
 // partial=true: शेवटी न पोहोचलेले शब्द "गाळलेले" धरत नाही (वेळ संपल्यास)
-export function compareWords(refWords, typedWords, { partial = false } = {}) {
-  const R = partial ? refWords.slice(0, Math.min(refWords.length, typedWords.length + 12)) : refWords;
+export function compareWords(refWords, typedWords, { partial = false, typing = false } = {}) {
+  if (partial) return compareSeq(refWords, typedWords, { typing });
+  const R =partial ? refWords.slice(0, Math.min(refWords.length, typedWords.length + 12)) : refWords;
   const n = R.length, m = typedWords.length;
   const L = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
   for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) {
@@ -68,7 +69,39 @@ export function compareWords(refWords, typedWords, { partial = false } = {}) {
   return { status, correct, wrong, missed, extra, errors: wrong + missed + extra, accuracy: total ? Math.round((correct / total) * 100) : 100, next: lastRef + 1 };
 }
 
-export const wpmOf = (chars, seconds) => (seconds > 0 ? Math.round(chars / 5 / (seconds / 60)) : 0);
+// Speed typing: शब्दानुसार क्रमाने तपासणी (परीक्षेप्रमाणे).
+// typing=true: शेवटचा शब्द अजून टाइप होत आहे (space दाबलेला नाही) → तो तपासत नाही.
+// गाळलेला शब्द: टाइप केलेला शब्द पुढील 1-2 शब्दांशी जुळला (व त्यानंतरचाही जुळत असल्यास) तरच.
+// जास्तीचा शब्द: पुढचा टाइप केलेला शब्द सध्याच्या मूळ शब्दाशी जुळल्यास.
+export function compareSeq(refWords, typedWords, { typing = false } = {}) {
+  const T = typing ? typedWords.slice(0, -1) : typedWords;
+  const status = new Array(refWords.length).fill('');
+  let i = 0, correct = 0, wrong = 0, missed = 0, extra = 0;
+  for (let j = 0; j < T.length && i < refWords.length; j++) {
+    const t = T[j], next = T[j + 1];
+    if (t === refWords[i]) { status[i++] = 'ok'; correct++; continue; }
+    // गाळलेले शब्द (1 किंवा 2)
+    let skip = 0;
+    for (const k of [1, 2]) {
+      if (refWords[i + k] === t && (next === undefined || next === refWords[i + k + 1])) { skip = k; break; }
+    }
+    if (skip) {
+      for (let s = 0; s < skip; s++) { status[i++] = 'miss'; missed++; }
+      status[i++] = 'ok'; correct++;
+      continue;
+    }
+    // जास्तीचा शब्द
+    if (next !== undefined && next === refWords[i] && t !== refWords[i + 1]) { extra++; continue; }
+    status[i++] = 'bad'; wrong++;
+  }
+  // मूळ परिच्छेद संपल्यानंतर टाइप केलेले शब्द = जास्तीचे
+  const consumed = correct + wrong + extra;
+  if (T.length > consumed) extra += T.length - consumed;
+  const total = correct + wrong + missed + extra;
+  return { status, correct, wrong, missed, extra, errors: wrong + missed + extra, accuracy: total ? Math.round((correct / total) * 100) : 100, next: i };
+}
+
+export const wpmOf =(chars, seconds) => (seconds > 0 ? Math.round(chars / 5 / (seconds / 60)) : 0);
 
 // ---------------- Statement (Excel) ----------------
 // Firestore मध्ये nested array चालत नाही → प्रत्येक ओळ TAB ने जोडलेली string
