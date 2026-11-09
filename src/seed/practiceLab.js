@@ -271,7 +271,7 @@ const DECK = JSON.stringify({
     ] } },
     { id: 'c', bg: '#fff4e6', json: { objects: [
       T('Contact Us', { top: 36, fontSize: 40, fontWeight: 'bold', fill: '#b45309' }),
-      T('Near Maruti Temple, Kasba, Bhalwani\nPhone: 96659 78585\nAdmissions open — join today!', { top: 150, fontSize: 30, lineHeight: 1.5, textAlign: 'center' }),
+      T('Near Maruti Temple, Kasba, Bhalwani\nPhone: 96659 78595\nAdmissions open — join today!', { top: 150, fontSize: 30, lineHeight: 1.5, textAlign: 'center' }),
     ] } },
   ],
 });

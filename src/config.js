@@ -34,7 +34,7 @@ export const CENTER = {
   tagline: 'संगणक प्रशिक्षण केंद्र',
   owner: 'श्री. रघुनाथ पवार',
   director: 'सौ. धनश्री पवार',
-  phones: ['9665978585', '8956490770'],
+  phones: ['9665978595', '8956490770'],
   address: 'मारुती मंदिराजवळ, कसबा, भाळवणी',
   email: '',
   receiptPrefix: 'PC',
