@@ -7,6 +7,8 @@ import { auth, db, secondaryAuth } from '../firebase';
 import { studentEmail } from './auth';
 import { CENTER, DRIVE_SCRIPT_URL, STUDENT_ID_PREFIX, STUDENT_ID_START } from '../config';
 import { SEED_MODULES } from '../seed/modules';
+import { SAMPLES_BY_TITLE, SAMPLE_MODULES } from '../seed/samples';
+import { LAB_MODULES } from '../seed/practiceLab';
 
 // ---------------- विद्यार्थी ----------------
 // नवीन विद्यार्थी: Student ID (PC1001…) तयार करून लॉगिन खाते + माहिती जतन
@@ -208,6 +210,18 @@ export async function evaluateSubmission(sub, { marks, feedback, status }) {
   await recomputeLeaderboard(sub.batchId);
 }
 
+// अनेक सादरीकरणांना एकदम गुण (उदा. सुचवलेले गुण) — नंतर प्रत्येक बॅचचा लीडरबोर्ड एकदाच
+export async function bulkEvaluate(list) {
+  for (let i = 0; i < list.length; i += 400) {
+    const b = writeBatch(db);
+    list.slice(i, i + 400).forEach(({ sub, marks }) => b.update(doc(db, 'submissions', sub.id), {
+      marks: Number(marks), status: 'evaluated', evaluatedAt: serverTimestamp(), evaluatedBy: auth.currentUser?.email || '',
+    }));
+    await b.commit();
+  }
+  for (const bid of new Set(list.map((x) => x.sub.batchId))) await recomputeLeaderboard(bid);
+}
+
 export async function recomputeLeaderboard(batchId) {
   if (!batchId) return;
   const [subs, studs] = await Promise.all([
@@ -246,11 +260,43 @@ export async function seedDemoModules() {
     b.set(mRef, { title: m.title, desc: m.desc, icon: m.icon, order: m.order, active: true, createdAt: serverTimestamp() });
     ops++;
     for (const e of m.exercises) {
-      b.set(doc(collection(db, 'exercises')), { ...e, moduleId: mRef.id, active: true, createdAt: serverTimestamp() });
+      b.set(doc(collection(db, 'exercises')), { ...e, ...(SAMPLES_BY_TITLE[e.title] || {}), moduleId: mRef.id, active: true, createdAt: serverTimestamp() });
       if (++ops >= 450) await flush();
     }
   }
   if (ops) await flush();
+  await applyStandardSamples();
+}
+
+// प्रमाणित नमुने: (1) शीर्षक जुळणाऱ्या सरावांना नमुना/टायपिंग प्रकार जोडा — Admin ने स्वतः नमुना लिहिला असल्यास बदल नाही
+// (2) Ready-Made मॉड्यूल्स नसल्यास नवीन जोडा. परत: { updated, added }
+export async function applyStandardSamples() {
+  const [mSnap, eSnap] = await Promise.all([getDocs(collection(db, 'modules')), getDocs(collection(db, 'exercises'))]);
+  let b = writeBatch(db), ops = 0, updated = 0, added = 0;
+  const flush = async () => { if (ops) await b.commit(); b = writeBatch(db); ops = 0; };
+  for (const d of eSnap.docs) {
+    const x = d.data(), std = SAMPLES_BY_TITLE[x.title];
+    if (!std) continue;
+    const patch = {};
+    if (std.kind === 'typing' && !x.kind) Object.assign(patch, { kind: 'typing', lang: std.lang, duration: std.duration });
+    if (std.sampleHtml && !x.sampleHtml) Object.assign(patch, { sampleHtml: std.sampleHtml, kind: x.kind || 'upload' });
+    if (Object.keys(patch).length) { b.update(d.ref, patch); updated++; if (++ops >= 400) await flush(); }
+  }
+  const titles = new Set(mSnap.docs.map((d) => d.data().title));
+  let order = mSnap.size;
+  for (const m of [...LAB_MODULES, ...SAMPLE_MODULES]) {
+    if (titles.has(m.title)) continue;
+    const mRef = doc(collection(db, 'modules'));
+    b.set(mRef, { title: m.title, desc: m.desc, icon: m.icon, order: ++order, active: true, courseIds: [], sequential: !!m.sequential, createdAt: serverTimestamp() });
+    ops++;
+    for (const e of m.exercises) {
+      b.set(doc(collection(db, 'exercises')), { ...e, moduleId: mRef.id, active: true, createdAt: serverTimestamp() });
+      added++;
+      if (++ops >= 400) await flush();
+    }
+  }
+  await flush();
+  return { updated, added };
 }
 
 export const saveModule = (m) =>

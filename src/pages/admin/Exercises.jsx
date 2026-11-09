@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import { useCollection } from '../../lib/useData';
 import {
   saveModule, saveExercise, removeDoc, seedDemoModules, saveOrder, moveExercise,
-  saveCourse, seedDefaultCourses, duplicateModule, duplicateExercise,
+  saveCourse, seedDefaultCourses, duplicateModule, duplicateExercise, applyStandardSamples,
 } from '../../lib/api';
+import ExerciseKindFields from '../../components/ExerciseKindFields';
+import { KINDS, parseMcq, formatMcq, gridFromRows, rowsFromGrid } from '../../lib/practice';
 import { COURSES } from '../../config';
 import Sortable from '../../components/Sortable';
 import { Modal, Spinner, Field, Alert, Empty } from '../../components/ui';
@@ -173,6 +175,16 @@ function ModulesTab({ courses, modules, exercises }) {
     try { await seedDemoModules(); await reloadAll(); } catch (e) { alert(e.message); } finally { setBusy(false); }
   };
 
+  const addStandard = async () => {
+    if (!confirm('प्रमाणित नमुने जोडायचे?\n• सध्याच्या सरावांना (नाव जुळल्यास) Ready-Made नमुना व टायपिंग चाचणी जोडली जाईल — तुम्ही लिहिलेले नमुने बदलणार नाहीत.\n• Typing Lab (Keyboard Lessons, Speed Typing, Letter, Statement, Email, MCQ) व Ready-Made Writer / Calc / Impress मॉड्यूल्स नसल्यास नवीन जोडले जातील.')) return;
+    setBusy(true);
+    try {
+      const r = await applyStandardSamples();
+      await reloadAll();
+      alert(`झाले ✅\n${r.updated} सरावांना नमुना/टायपिंग जोडले.\n${r.added} नवीन नमुना-सराव जोडले.`);
+    } catch (e) { alert(e.message); } finally { setBusy(false); }
+  };
+
   const saveM = async (e) => {
     e.preventDefault();
     try {
@@ -185,11 +197,28 @@ function ModulesTab({ courses, modules, exercises }) {
     e.preventDefault();
     const steps = String(eEdit.stepsText || '').split('\n').map((s) => s.trim()).filter(Boolean);
     const { stepsText, ...rest } = eEdit;
-    const movedModule = rest.id && exercises.data.find((x) => x.id === rest.id)?.moduleId !== rest.moduleId;
+    const { mcqText, sheetGrid, ...data } = rest;
+    const kind = data.kind || 'upload';
+    if (new Blob([data.sampleHtml || '']).size > 900 * 1024) return setErr('नमुना खूप मोठा आहे (900 KB पेक्षा जास्त). मोठी चित्रे काढून लिंकने जोडा.');
+    if ((kind === 'typing' || kind === 'keys') && !String(data.target || '').trim()) return setErr('टाइप करायचा मजकूर आवश्यक आहे.');
+    if (kind === 'letter' && !String(data.sampleHtml || '').trim()) return setErr('संदर्भ पत्र आवश्यक आहे.');
+    if (kind === 'email' && (!data.email?.to || !data.email?.body)) return setErr('ईमेलचा "Mail to" व मजकूर आवश्यक आहे.');
+    if (kind === 'statement') {
+      data.sheetRows = rowsFromGrid(sheetGrid || []);
+      if (!data.sheetRows.length) return setErr('संदर्भ तक्ता भरा.');
+    }
+    if (kind === 'mcq') {
+      const p = parseMcq(mcqText);
+      if (!p.questions.length) return setErr('किमान एक प्रश्न लिहा.');
+      if (p.errors.length) return setErr(p.errors[0]);
+      data.questions = p.questions;
+    }
+    const movedModule = data.id && exercises.data.find((x) => x.id === data.id)?.moduleId !== data.moduleId;
     try {
       await saveExercise({
-        ...rest, steps, maxMarks: Number(rest.maxMarks || 10),
-        order: movedModule || !rest.order ? exOf(rest.moduleId).length + 1 : Number(rest.order),
+        ...data, steps, maxMarks: Number(data.maxMarks || 10), kind,
+        ...(data.targetWpm ? { targetWpm: Number(data.targetWpm) } : {}),
+        order: movedModule || !data.order ? exOf(data.moduleId).length + 1 : Number(data.order),
       });
       setEEdit(null);
       reloadAll();
@@ -204,7 +233,7 @@ function ModulesTab({ courses, modules, exercises }) {
     await (col === 'modules' ? saveModule : saveExercise)({ id: it.id, active: it.active === false });
     reloadAll();
   };
-  const newExercise = () => ({ moduleId: current.id, title: '', tool: '', intro: '', stepsText: '', skills: '', target: '', resourceUrl: '', maxMarks: 10, active: true });
+  const newExercise = () => ({ moduleId: current.id, title: '', tool: '', intro: '', stepsText: '', skills: '', target: '', resourceUrl: '', sampleHtml: '', kind: 'upload', maxMarks: 10, active: true });
 
   return (
     <>
@@ -216,6 +245,7 @@ function ModulesTab({ courses, modules, exercises }) {
         </select>
         <span style={{ flex: 1 }} />
         {!allMods.length && <button className="btn light" disabled={busy} onClick={seed}>{busy ? 'लोड होत आहे…' : '📥 डेमो सराव लोड करा'}</button>}
+        {!!allMods.length && <button className="btn light" disabled={busy} onClick={addStandard}>{busy ? 'जोडत आहे…' : '📚 प्रमाणित नमुने व सराव जोडा'}</button>}
         <button className="btn saffron" onClick={() => { setErr(''); setMEdit({ title: '', desc: '', icon: '📘', active: true, courseIds: courseFilter && courseFilter !== '_all' ? [courseFilter] : [] }); }}>+ नवीन मॉड्यूल</button>
       </div>
 
@@ -276,6 +306,7 @@ function ModulesTab({ courses, modules, exercises }) {
                     <div className="smain">
                       <b>{x.title}</b>
                       <div className="small muted">
+                        {x.kind && x.kind !== 'upload' && <span className="badge info">{KINDS[x.kind]?.icon} {KINDS[x.kind]?.short}</span>}{x.sampleHtml && x.kind !== 'letter' && <span className="badge ok">📘 नमुना</span>}{' '}
                         {[x.tool, `${(x.steps || []).length} पायऱ्या`, `कमाल गुण ${x.maxMarks || 10}`].filter(Boolean).join(' · ')}
                         {x.active === false && <> · <span className="badge bad">लपवलेला</span></>}
                       </div>
@@ -284,7 +315,7 @@ function ModulesTab({ courses, modules, exercises }) {
                       {h.up}{h.down}
                       <button className="btn sm light" title={x.active === false ? 'दाखवा' : 'लपवा'} onClick={() => toggle('exercises', x)}>{x.active === false ? '👁' : '🙈'}</button>
                       <button className="btn sm light" title="प्रत" onClick={async () => { await duplicateExercise(x, items.length + 1); reloadAll(); }}>⧉</button>
-                      <button className="btn sm" onClick={() => { setErr(''); setEEdit({ ...x, stepsText: (x.steps || []).join('\n') }); }}>संपादन</button>
+                      <button className="btn sm" onClick={() => { setErr(''); setEEdit({ ...x, stepsText: (x.steps || []).join('\n'), mcqText: formatMcq(x.questions), sheetGrid: gridFromRows(x.sheetRows) }); }}>संपादन</button>
                       <button className="btn sm red" onClick={() => delE(x)}>✕</button>
                     </div>
                   </div>
@@ -303,6 +334,9 @@ function ModulesTab({ courses, modules, exercises }) {
               <Field label="आयकॉन (emoji)"><input value={mEdit.icon} onChange={(e) => setMEdit({ ...mEdit, icon: e.target.value })} /></Field>
               <Field label="विद्यार्थ्यांना दाखवा">
                 <select value={mEdit.active === false ? '0' : '1'} onChange={(e) => setMEdit({ ...mEdit, active: e.target.value === '1' })}><option value="1">होय</option><option value="0">नाही (लपवलेले)</option></select>
+              </Field>
+              <Field label="सराव क्रमाने उघडा">
+                <select value={mEdit.sequential ? '1' : '0'} onChange={(e) => setMEdit({ ...mEdit, sequential: e.target.value === '1' })}><option value="0">नाही — सर्व सराव खुले</option><option value="1">होय — आधीचा सादर केल्यावरच पुढचा</option></select>
               </Field>
               <Field label="वर्णन" full><textarea value={mEdit.desc || ''} onChange={(e) => setMEdit({ ...mEdit, desc: e.target.value })} /></Field>
               <Field label="कोणत्या अभ्यासक्रमासाठी?" full>
@@ -342,9 +376,9 @@ function ModulesTab({ courses, modules, exercises }) {
               <Field label="विद्यार्थ्यांना दाखवा">
                 <select value={eEdit.active === false ? '0' : '1'} onChange={(e) => setEEdit({ ...eEdit, active: e.target.value === '1' })}><option value="1">होय</option><option value="0">नाही (लपवलेला)</option></select>
               </Field>
+              <ExerciseKindFields e={eEdit} set={setEEdit} />
               <Field label="प्रस्तावना / उद्दिष्ट" full><textarea value={eEdit.intro || ''} onChange={(e) => setEEdit({ ...eEdit, intro: e.target.value })} /></Field>
               <Field label="पायऱ्या (प्रत्येक ओळीत एक पायरी)" full><textarea rows={8} value={eEdit.stepsText} onChange={(e) => setEEdit({ ...eEdit, stepsText: e.target.value })} /></Field>
-              <Field label="सराव मजकूर (टायपिंगसाठी, ऐच्छिक)" full><textarea value={eEdit.target || ''} onChange={(e) => setEEdit({ ...eEdit, target: e.target.value })} /></Field>
               <Field label="कौशल्ये"><input value={eEdit.skills || ''} onChange={(e) => setEEdit({ ...eEdit, skills: e.target.value })} /></Field>
               <Field label="संदर्भ लिंक (ऐच्छिक — नमुना फाइल/व्हिडिओ)"><input type="url" value={eEdit.resourceUrl || ''} onChange={(e) => setEEdit({ ...eEdit, resourceUrl: e.target.value })} placeholder="https://" /></Field>
             </div>

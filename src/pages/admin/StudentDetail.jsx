@@ -5,6 +5,8 @@ import { resetStudentPassword, getStudentLogin, updateStudent, recomputeLeaderbo
 import { DEFAULT_STUDENT_PASSWORD } from '../../config';
 import StudentForm from '../../components/StudentForm';
 import { Spinner, StatusBadge, Modal, Alert } from '../../components/ui';
+import { KINDS } from '../../lib/practice';
+import { metricsLine } from '../../components/practice';
 import { money, fmtDate, byTimeDesc } from '../../lib/format';
 
 export default function StudentDetail() {
@@ -122,7 +124,7 @@ export default function StudentDetail() {
             {[...subs.data].sort(byTimeDesc('submittedAt')).map((x) => (
               <tr key={x.id}>
                 <td>{x.exerciseTitle}<div className="small muted">{x.moduleTitle}</div></td>
-                <td><a href={x.fileUrl} target="_blank" rel="noreferrer">📎 {x.fileName}</a></td>
+                <td className="small">{x.fileUrl ? <a href={x.fileUrl} target="_blank" rel="noreferrer">📎 {x.fileName}</a> : <>{KINDS[x.kind]?.icon} {metricsLine(x.kind, x.metrics)}</>}</td>
                 <td><StatusBadge status={x.status} /></td>
                 <td className="num">{x.status === 'evaluated' ? `${x.marks}/${x.maxMarks}` : '-'}</td>
               </tr>
