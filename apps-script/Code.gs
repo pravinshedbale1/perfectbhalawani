@@ -16,6 +16,9 @@ var FIREBASE_API_KEY = 'AIzaSyBNUgLVzlrKBQ8eecJGWxtkTcUN4JX6e1w';
 var FIREBASE_PROJECT = 'perfect-bhalawani';
 var ROOT_FOLDER_NAME = 'Perfect Computers Submissions';
 var MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+// कोणतीही फाइल चालते — फक्त व्हिडिओ व ऑडिओ/गाणी नाहीत
+var BLOCKED_EXT = ['mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm', '3gp', '3g2', 'm4v', 'mpg', 'mpeg', 'mts', 'm2ts', 'vob', 'ogv', 'rm', 'rmvb', 'asf',
+  'mp3', 'wav', 'aac', 'm4a', 'ogg', 'oga', 'flac', 'wma', 'amr', 'opus', 'aiff', 'aif', 'mid', 'midi', 'ra', 'ape', 'alac'];
 
 function doGet() {
   return json_({ ok: true, service: 'perfect-computers-drive', time: new Date().toISOString() });
@@ -50,6 +53,12 @@ function upload_(user, student, body) {
   if (!body.base64) throw new Error('फाइल मिळाली नाही');
   var bytes = Utilities.base64Decode(body.base64);
   if (bytes.length > MAX_BYTES) throw new Error('फाइल 10 MB पेक्षा मोठी आहे');
+  var ext = String(body.fileName || '').split('.').pop().toLowerCase();
+  if (/^(video|audio)\//.test(String(body.mimeType || '')) || BLOCKED_EXT.indexOf(ext) !== -1) {
+    throw new Error('व्हिडिओ व ऑडिओ/गाण्यांच्या फाइल्स सादर करता येत नाहीत.');
+  }
+  // फाइलच्या प्रत्यक्ष मजकुरावरून ओळख (नाव बदलून पाठवलेले व्हिडिओ/ऑडिओ)
+  if (looksLikeMedia_(bytes)) throw new Error('व्हिडिओ व ऑडिओ/गाण्यांच्या फाइल्स सादर करता येत नाहीत.');
 
   var lock = LockService.getScriptLock();
   lock.waitLock(20000); // एकाच वेळी दोन अपलोडमुळे दुहेरी फोल्डर होऊ नयेत
@@ -70,6 +79,21 @@ function upload_(user, student, body) {
   api_('post', DRIVE + '/files/' + file.id + '/permissions', { role: 'reader', type: 'anyone' });
 
   return { ok: true, fileId: file.id, fileName: body.fileName, url: file.webViewLink, size: bytes.length };
+}
+
+// प्रसिद्ध व्हिडिओ/ऑडिओ फॉरमॅट्सची सुरुवातीची bytes (magic numbers)
+function looksLikeMedia_(b) {
+  var s = function (i, n) { var t = ''; for (var k = i; k < i + n && k < b.length; k++) t += String.fromCharCode(b[k] & 0xff); return t; };
+  if (b.length < 12) return false;
+  // mp4, mov, m4a, 3gp — पण HEIC/AVIF फोटो (iPhone) यांनाही ftyp असते, ते चालू द्या
+  var ftyp = s(4, 4) === 'ftyp' && ['heic', 'heix', 'heim', 'heis', 'mif1', 'msf1', 'avif', 'avis'].indexOf(s(8, 4)) === -1;
+  var riff = s(0, 4) === 'RIFF' && /WAVE|AVI /.test(s(8, 4)); // wav, avi
+  var ebml = (b[0] & 0xff) === 0x1a && (b[1] & 0xff) === 0x45 && (b[2] & 0xff) === 0xdf && (b[3] & 0xff) === 0xa3; // mkv, webm
+  var mp3 = s(0, 3) === 'ID3' || ((b[0] & 0xff) === 0xff && ((b[1] & 0xff) & 0xe0) === 0xe0 && ((b[1] & 0xff) & 0x06) !== 0);
+  var ogg = s(0, 4) === 'OggS', flac = s(0, 4) === 'fLaC', flv = s(0, 3) === 'FLV';
+  var asf = (b[0] & 0xff) === 0x30 && (b[1] & 0xff) === 0x26 && (b[2] & 0xff) === 0xb2 && (b[3] & 0xff) === 0x75; // wmv, wma
+  var mpg = (b[0] & 0xff) === 0 && (b[1] & 0xff) === 0 && (b[2] & 0xff) === 1 && ((b[3] & 0xff) === 0xba || (b[3] & 0xff) === 0xb3);
+  return ftyp || riff || ebml || mp3 || ogg || flac || flv || asf || mpg;
 }
 
 // फोल्डर ID Script Properties मध्ये लक्षात ठेवा; हटवला गेला असल्यास पुन्हा तयार करा

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../lib/auth';
 import { useCollection } from '../../lib/useData';
-import { submitExercise, MAX_UPLOAD_MB, ALLOWED_EXT, driveConfigured, moduleVisibleTo } from '../../lib/api';
+import { submitExercise, MAX_UPLOAD_MB, isBlockedFile, driveConfigured, moduleVisibleTo } from '../../lib/api';
 import { Spinner, StatusBadge, Alert, Empty } from '../../components/ui';
 import { fmtDateTime } from '../../lib/format';
 
@@ -119,8 +119,13 @@ function ExerciseDetail({ ex, module, sub, student, onBack, onDone }) {
             ) : (
               <form onSubmit={upload}>
                 <div className="dropzone">
-                  <input type="file" accept={ALLOWED_EXT.map((x) => '.' + x).join(',')} onChange={(e) => setFile(e.target.files[0] || null)} />
-                  <div className="small muted mt">Word, Excel, PowerPoint, PDF, फोटो · कमाल {MAX_UPLOAD_MB} MB</div>
+                  <input type="file" onChange={(e) => {
+                    const f = e.target.files[0] || null;
+                    if (f && isBlockedFile(f)) { setMsg({ err: 'व्हिडिओ व ऑडिओ/गाण्यांच्या फाइल्स सादर करता येत नाहीत.' }); e.target.value = ''; setFile(null); return; }
+                    if (f && f.size > MAX_UPLOAD_MB * 1024 * 1024) { setMsg({ err: `फाइल ${MAX_UPLOAD_MB} MB पेक्षा लहान असावी.` }); e.target.value = ''; setFile(null); return; }
+                    setMsg({}); setFile(f);
+                  }} />
+                  <div className="small muted mt">कोणतीही फाइल (Word, Excel, PDF, फोटो, ZIP इ.) · व्हिडिओ/गाणी नाहीत · कमाल {MAX_UPLOAD_MB} MB</div>
                 </div>
                 <label>टीप (ऐच्छिक)</label>
                 <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="उदा. पायरी 4 मध्ये अडचण आली." />

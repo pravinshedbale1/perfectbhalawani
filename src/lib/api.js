@@ -150,11 +150,19 @@ const fileToBase64 = (file) =>
   });
 
 export const MAX_UPLOAD_MB = 10;
-export const ALLOWED_EXT = ['pdf', 'doc', 'docx', 'odt', 'xls', 'xlsx', 'ods', 'ppt', 'pptx', 'odp', 'txt', 'png', 'jpg', 'jpeg', 'zip', 'csv'];
+// कोणतीही फाइल चालते — फक्त व्हिडिओ व ऑडिओ/गाणी नाहीत (Apps Script मध्येही हीच तपासणी)
+export const BLOCKED_EXT = [
+  'mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm', '3gp', '3g2', 'm4v', 'mpg', 'mpeg', 'mts', 'm2ts', 'vob', 'ogv', 'rm', 'rmvb', 'asf',
+  'mp3', 'wav', 'aac', 'm4a', 'ogg', 'oga', 'flac', 'wma', 'amr', 'opus', 'aiff', 'aif', 'mid', 'midi', 'ra', 'ape', 'alac',
+];
+export const isBlockedFile = (file) => {
+  const ext = String(file.name).split('.').pop().toLowerCase();
+  return /^(video|audio)\//.test(file.type || '') || BLOCKED_EXT.includes(ext);
+};
 
 export async function submitExercise({ student, exercise, module, file, note }) {
-  const ext = file.name.split('.').pop().toLowerCase();
-  if (!ALLOWED_EXT.includes(ext)) throw new Error('ही फाइल प्रकार चालत नाही: .' + ext);
+  if (isBlockedFile(file)) throw new Error('व्हिडिओ व ऑडिओ/गाण्यांच्या फाइल्स सादर करता येत नाहीत.');
+  if (!file.size) throw new Error('फाइल रिकामी आहे.');
   if (file.size > MAX_UPLOAD_MB * 1024 * 1024) throw new Error(`फाइल ${MAX_UPLOAD_MB} MB पेक्षा लहान असावी.`);
   const up = await callScript({
     action: 'upload',
