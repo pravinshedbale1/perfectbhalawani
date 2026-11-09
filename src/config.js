@@ -14,7 +14,7 @@ export const FIREBASE_CONFIG = {
 };
 
 // Google Apps Script Web App URL (apps-script/README.md पहा)
-export const DRIVE_SCRIPT_URL = 'PASTE_APPS_SCRIPT_WEB_APP_URL';
+export const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVfiSAxFdy7zlm5WY0p4GSPMuvzOaw8hm31daazGpcfYzGy8fmKZMg67O5eEUUaTJQ/exec';
 
 // लॉगिन व्यवस्था (Google login नाही):
 //  • Admin: Admin ID (उदा. "admin") + पासवर्ड  → अंतर्गत ईमेल admin@perfectbhalawani.in

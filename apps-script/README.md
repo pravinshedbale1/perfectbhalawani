@@ -1,34 +1,27 @@
-# Google Drive Upload सेटअप (Apps Script) — एकदाच, ~5 मिनिटे
+# Google Drive Upload (Apps Script)
 
-विद्यार्थ्यांनी अपलोड केलेल्या फाइल्स थेट तुमच्या Google Drive मध्ये जातात:
-`My Drive / Perfect Computers Submissions / <बॅच> / <विद्यार्थी> / ...`
+विद्यार्थ्यांनी अपलोड केलेल्या फाइल्स **pravinshedbale10@gmail.com** च्या Drive मध्ये जातात:
+`My Drive / Perfect Computers Submissions / <बॅच> / <Student ID - नाव> / <सराव>__<दिनांक>__<फाइल>`
 
-> ⚠️ ज्या Google खात्याकडे Firebase project **perfect-bhalawani** आहे, त्याच खात्याने हे करा
-> (Console URL मध्ये `/u/1/` आहे — म्हणजे ब्राउझरमधील दुसरे खाते).
+- **परवानगी फक्त `drive.file`** — script फक्त स्वतः तयार केलेले फोल्डर/फाइल्स पाहू शकते; Drive मधील इतर काहीही नाही.
+- फक्त नोंदणीकृत व **सक्रिय** विद्यार्थीच अपलोड करू शकतो (Firebase token + Firestore `students/{uid}` तपासणी).
+- कमाल 10 MB. फाइल "लिंक असलेल्यांना पाहता येईल" अशी शेअर होते.
 
-1. https://script.google.com → **New project** → नाव: `Perfect Computers Drive`
-2. डावीकडे ⚙️ **Project Settings** → ✅ "Show appsscript.json manifest file in editor"
-3. **Editor** मध्ये:
-   - `Code.gs` मधील सर्व मजकूर काढून या फोल्डरमधील `Code.gs` पेस्ट करा.
-   - `appsscript.json` मध्ये या फोल्डरमधील `appsscript.json` पेस्ट करा.
-4. ⚙️ **Project Settings → Script Properties → Add**:
-   | Property | Value |
-   |---|---|
-   | `FIREBASE_API_KEY` | `src/config.js` मधील `apiKey` |
-   | `FIREBASE_PROJECT` | `perfect-bhalawani` |
-   5. Editor मध्ये function `authorize` निवडा → **Run** → परवानग्या **Allow** करा
-   ("Google hasn't verified this app" आल्यास → Advanced → Go to … (unsafe) → Allow — हे तुमचेच script आहे).
-6. **Deploy → New deployment** → प्रकार ⚙️ **Web app**
-   - Execute as: **Me**
-   - Who has access: **Anyone**
-   - **Deploy** → मिळालेली **Web app URL** (`https://script.google.com/macros/s/…/exec`) कॉपी करा.
-7. ती URL `src/config.js` मधील `DRIVE_SCRIPT_URL` मध्ये पेस्ट करा, commit + push करा.
+## सध्याचे deployment
+- Script: https://script.google.com/u/1/home/projects/1keMt8_alcR46G-cZ1HbrYsIdbT3Y5DH_CC03HI67oZ7ltX5clGWOED0k/edit
+- Web app URL (`src/config.js` → `DRIVE_SCRIPT_URL`):
+  `https://script.google.com/macros/s/AKfycbzVfiSAxFdy7zlm5WY0p4GSPMuvzOaw8hm31daazGpcfYzGy8fmKZMg67O5eEUUaTJQ/exec`
 
-### तपासणी
-ब्राउझरमध्ये Web app URL उघडा → `{"ok":true,...}` दिसले पाहिजे.
+## कोड बदलल्यावर (clasp)
+```bash
+npm i -g @google/clasp
+clasp login                      # pravinshedbale10@gmail.com
+cd apps-script
+clasp push -f
+clasp update-deployment AKfycbzVfiSAxFdy7zlm5WY0p4GSPMuvzOaw8hm31daazGpcfYzGy8fmKZMg67O5eEUUaTJQ --description "..."
+```
+`update-deployment` मुळे URL तीच राहते. `appsscript.json` मध्ये नवीन परवानगी (scope) जोडल्यास,
+editor मध्ये `authorize` function एकदा Run करून पुन्हा Allow करावे लागेल.
 
-### Script मध्ये बदल केल्यास
-**Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy** (URL तीच राहते).
-
-### सुविधा
-- `upload` — विद्यार्थी फाइल अपलोड (Firebase लॉगिन token तपासून, कमाल 10 MB)
+## तपासणी
+Web app URL ब्राउझरमध्ये उघडा → `{"ok":true,"service":"perfect-computers-drive",...}`
