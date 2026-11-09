@@ -8,9 +8,10 @@ export default function Receipt({ p, copyLabel }) {
   const due = Math.max(0, Number(p.totalFee || 0) - paidAfter);
   return (
     <div className={'rcpt' + (p.cancelled ? ' void' : '')}>
+      <img className="rcpt-wm" src="/receipt-watermark.png" alt="" aria-hidden="true" />
       {copyLabel && <div className="copy">{copyLabel}</div>}
       <div className="rcpt-head">
-        <img src="/logo.svg" alt="" />
+        <img src="/logo.png" alt="" />
         <div className="t">
           <div className="mr">{CENTER.nameMr}, {CENTER.place}</div>
           <div className="en">{CENTER.nameEn} · {CENTER.placeEn}</div>

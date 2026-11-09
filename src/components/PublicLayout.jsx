@@ -27,7 +27,7 @@ export function SiteHeader() {
       </div>
       <header className="site-head">
         <div className="wrap">
-          <Link to="/" className="logo"><img src="/logo.svg" alt="परफेक्ट कॉम्प्युटर्स लोगो" /></Link>
+          <Link to="/" className="logo"><img src="/logo.png" alt="परफेक्ट कॉम्प्युटर्स लोगो" /></Link>
           <div className="site-title">
             <div className="mr">{CENTER.nameMr}, {CENTER.place}</div>
             <div className="en">{CENTER.nameEn} · {CENTER.placeEn}</div>
@@ -89,7 +89,7 @@ export function SiteFooter() {
     <footer className="site-foot" id="contact">
       <div className="wrap">
         <div className="f-brand">
-          <img src="/logo.svg" alt="" />
+          <img src="/logo.png" alt="" />
           <div>
             <h4>{CENTER.nameMr}, {CENTER.place}</h4>
             <div>📍 {CENTER.address}</div>

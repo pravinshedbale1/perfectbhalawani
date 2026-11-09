@@ -35,7 +35,7 @@ export default function DashLayout({ role, links }) {
         <div className="bar">
           <button className="menu-btn" aria-label="मेनू" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? '✕' : '☰'}</button>
           <Link to="/" className="brand">
-            <img src="/logo.svg" alt="" />
+            <img src="/logo.png" alt="" />
             <div>
               <b>{CENTER.nameMr}, {CENTER.place}</b>
               <small>{role === 'admin' ? 'व्यवस्थापन पॅनेल' : 'विद्यार्थी पोर्टल'}</small>
