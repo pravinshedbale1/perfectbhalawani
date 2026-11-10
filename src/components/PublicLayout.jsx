@@ -85,33 +85,50 @@ export function Ticker({ notices }) {
 }
 
 export function SiteFooter() {
+  const year = new Date().getFullYear();
   return (
     <footer className="site-foot" id="contact">
-      <div className="wrap">
+      <div className="wrap f-grid">
         <div className="f-brand">
-          <img src="/logo.png" alt="" />
+          <img src="/logo.png" alt="परफेक्ट कॉम्प्युटर्स लोगो" />
           <div>
             <h4>{CENTER.nameMr}, {CENTER.place}</h4>
-            <div>📍 {CENTER.address}</div>
-            <div>📞 {CENTER.phones.map((p, i) => <span key={p}>{i ? ' / ' : ''}<a href={`tel:${p}`}>{p}</a></span>)}</div>
+            <div className="f-en">{CENTER.nameEn} · {CENTER.placeEn}</div>
+            <p className="f-tag">संगणक प्रशिक्षण केंद्र — गुणवत्तापूर्ण संगणक शिक्षण, आपल्या गावात.</p>
           </div>
         </div>
         <div>
+          <h4>संपर्क</h4>
+          <ul className="f-list">
+            <li><span className="f-ic">📍</span><span>{CENTER.address}</span></li>
+            {CENTER.phones.map((p) => (
+              <li key={p}><span className="f-ic">📞</span><a href={`tel:+91${p}`}>{p.replace(/(\d{5})(\d{5})/, '$1 $2')}</a></li>
+            ))}
+            <li><span className="f-ic">🗺️</span><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Perfect Computers Bhalwani Pandharpur')}`} target="_blank" rel="noreferrer">नकाशावर पहा</a></li>
+          </ul>
+        </div>
+        <div>
           <h4>उपयुक्त दुवे</h4>
-          <div><Link to="/login">विद्यार्थी लॉगिन</Link></div>
-          <div><Link to="/login?admin=1">Admin लॉगिन</Link></div>
-          <div><a href="/#courses">अभ्यासक्रम</a></div>
+          <ul className="f-list f-links">
+            <li><a href="/#courses">अभ्यासक्रम</a></li>
+            <li><Link to="/login">विद्यार्थी लॉगिन</Link></li>
+            <li><Link to="/login?admin=1">Admin लॉगिन</Link></li>
+          </ul>
         </div>
         <div>
           <h4>व्यवस्थापन</h4>
-          <div>संचालक: {CENTER.owner}</div>
-          <div>संचालिका: {CENTER.director}</div>
+          <ul className="f-list">
+            <li><span className="f-ic">👤</span><span><small>संचालक</small><b>{CENTER.owner}</b></span></li>
+            <li><span className="f-ic">👤</span><span><small>संचालिका</small><b>{CENTER.director}</b></span></li>
+          </ul>
         </div>
       </div>
       <div className="bottom">
         <div className="wrap">
-          <span>© {new Date().getFullYear()} {CENTER.nameMr}, {CENTER.place}. सर्व हक्क राखीव.</span>
-          <span>perfectbhalawani.in</span>
+          <span>© {year} {CENTER.nameMr}, {CENTER.place}. सर्व हक्क राखीव.</span>
+          <span className="f-credit">
+            Developed by <a href="mailto:pravinvshedbale09@gmail.com" title="pravinvshedbale09@gmail.com">Pravin Shedbale</a>
+          </span>
         </div>
       </div>
     </footer>
