@@ -83,6 +83,26 @@ export function WorkView({ ex, sub }) {
     );
   }
   const dlName = `${sub.studentName || 'student'}_${ex.title || 'practice'}`.replace(/[^\w\u0900-\u097F]+/g, '_').slice(0, 60);
+  if (w.ext) {
+    // खऱ्या LibreOffice मध्ये केलेले काम (.odt / .ods / .odp)
+    const dl = () => {
+      const bytes = Uint8Array.from(atob(w.file), (c) => c.charCodeAt(0));
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([bytes]));
+      a.download = w.fileName || `${dlName}.${w.ext}`;
+      document.body.appendChild(a); a.click(); setTimeout(() => a.remove(), 500);
+    };
+    return (
+      <div className="lo-ref-box">
+        <p style={{ marginTop: 0 }}>🖥️ विद्यार्थ्याने हे काम <b>LibreOffice</b> मध्ये केले — फाइल: <code>{w.fileName}</code> ({Math.round((w.size || 0) / 1024)} KB)</p>
+        <div className="row">
+          {w.file && <a className="btn saffron" href={`/office.html?mode=view&sub=${sub.id}`} target="_blank" rel="noreferrer">🖥️ LibreOffice मध्ये उघडा (संदर्भासह)</a>}
+          {w.file && <button className="btn light" onClick={dl}>⬇️ .{w.ext} डाउनलोड</button>}
+          {w.driveUrl && <a className="btn light" href={w.driveUrl} target="_blank" rel="noreferrer">📎 Drive मध्ये उघडा</a>}
+        </div>
+      </div>
+    );
+  }
   if (kind === 'letter' || kind === 'writer') {
     return (
       <>

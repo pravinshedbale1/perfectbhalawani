@@ -1,11 +1,8 @@
-import { lazy, Suspense } from 'react';
-import { Field, Spinner } from './ui';
+import { Field } from './ui';
 import SampleEditor from './SampleEditor';
 import SheetGrid from './practice/SheetGrid';
 import { KINDS, EMAIL_FIELDS, TARGET_WPM, parseMcq } from '../lib/practice';
 
-const CalcEditor = lazy(() => import('./office/CalcEditor'));
-const ImpressEditor = lazy(() => import('./office/ImpressEditor'));
 
 // Admin: सरावाच्या प्रकारानुसार fields (eEdit = संपादनातील सराव)
 export default function ExerciseKindFields({ e, set }) {
@@ -50,39 +47,36 @@ export default function ExerciseKindFields({ e, set }) {
         </>
       )}
 
-      {(kind === 'letter' || kind === 'writer') && (
+      {kind === 'letter' && (
         <>
           {timeSel('वेळ मर्यादा', [0, 300, 600, 900, 1200, 1800, 2700, 3600])}
-          <Field label={kind === 'writer' ? '📄 नमुना document (डावीकडे दिसेल). विद्यार्थी Word सारख्या पूर्ण संपादकात (File/Edit/Insert/Format/Table menus) तसाच तयार करतील. मजकूर व formatting आपोआप तपासले जातात; नमुना नसल्यास तुम्ही पाहून गुण द्या.' : '📄 संदर्भ पत्र (विद्यार्थ्यांना डावीकडे दिसेल; मजकूर व formatting दोन्ही तपासले जातात)'} required={kind === 'letter'} full>
+          <Field label="📄 संदर्भ पत्र (विद्यार्थ्यांना डावीकडे दिसेल; मजकूर व formatting दोन्ही तपासले जातात)" required full>
             <SampleEditor value={e.sampleHtml || ''} onChange={(v) => upd({ sampleHtml: v })} />
           </Field>
         </>
       )}
 
-      {kind === 'calc' && (
+      {['writer', 'calc', 'impress'].includes(kind) && (
         <>
-          {timeSel('वेळ मर्यादा', [0, 600, 900, 1200, 1800, 2700, 3600])}
-          <Field label="📗 संदर्भ workbook — Excel सारखे पूर्ण sheet (सूत्रे =SUM(), formatting, merge, borders). विद्यार्थ्यांच्या sheet ची मूल्ये, सूत्रे व formatting याच्याशी तपासली जातील. (रिकामे ठेवल्यास तुम्ही पाहून गुण द्या)" full>
-            <Suspense fallback={<Spinner />}>
-              <CalcEditor key={e._rk || 0} json={e.refBook || ''} height={460} onChange={(j) => upd({ refBook: j })} />
-            </Suspense>
-            {e.refBook && <button type="button" className="btn sm light mt" onClick={() => confirm('संदर्भ workbook काढायचे?') && upd({ refBook: '' , _rk: (e._rk || 0) + 1 })}>🗑 संदर्भ काढा</button>}
+          {timeSel('वेळ मर्यादा (फक्त माहितीसाठी)', [0, 600, 900, 1200, 1800, 2700, 3600])}
+          <Field label="🖥️ संदर्भ / नमुना — खरे LibreOffice" full>
+            <div className="lo-ref-box">
+              <p style={{ margin: 0 }}>
+                विद्यार्थी हा सराव <b>खऱ्या LibreOffice {({ writer: 'Writer', calc: 'Calc', impress: 'Impress' })[kind]}</b> मध्ये करतील (सर्व menus, toolbars, dialogs).
+                डावीकडे संदर्भ दस्तऐवज (फक्त वाचण्यासाठी) उघडतो; सादर केल्यावर त्याच्याशी तुलना करून गुण आपोआप मिळतात.
+              </p>
+              <div className="row mt">
+                {e.id
+                  ? <button type="button" className="btn saffron" onClick={() => window.open(`/office.html?mode=ref&ex=${e.id}`, '_blank')}>🖥️ LibreOffice मध्ये संदर्भ {e.refFile ? 'बदला' : 'तयार करा'}</button>
+                  : <span className="small" style={{ color: 'var(--warn)' }}>आधी हा सराव "जतन करा", मग LibreOffice मध्ये संदर्भ तयार करता येईल.</span>}
+                {e.refFile && <span className="badge ok">✓ संदर्भ फाइल ({Math.round((e.refFile.length * 0.75) / 1024)} KB)</span>}
+                {e.refFile && <button type="button" className="btn sm light" onClick={() => confirm('LibreOffice संदर्भ फाइल काढायची? (खालील नमुना वापरला जाईल)') && upd({ refFile: '', _clearRef: true })}>🗑 काढा</button>}
+                {!e.refFile && (e.refBook || e.refDeck) && <span className="badge info">जुना संदर्भ (आपोआप LibreOffice मध्ये रूपांतरित होतो)</span>}
+              </div>
+              <p className="small muted" style={{ marginBottom: 0 }}>💡 संदर्भ जतन केल्यानंतर या खिडकीत "जतन करा" दाबण्याची गरज नाही — तो थेट जतन होतो.</p>
+            </div>
           </Field>
-          <Field label="📘 नमुना / सूचना (ऐच्छिक — संदर्भ workbook नसल्यास डावीकडे हा दिसेल)" full>
-            <SampleEditor value={e.sampleHtml || ''} onChange={(v) => upd({ sampleHtml: v })} />
-          </Field>
-        </>
-      )}
-
-      {kind === 'impress' && (
-        <>
-          {timeSel('वेळ मर्यादा', [0, 600, 900, 1200, 1800, 2700, 3600])}
-          <Field label="📙 संदर्भ presentation — slides तयार करा (विद्यार्थ्यांना डावीकडे दिसतील; slides संख्या, मजकूर, चित्रे/आकार तपासले जातील). रिकामे ठेवल्यास खालील नमुना दिसेल." full>
-            <Suspense fallback={<Spinner />}>
-              <ImpressEditor json={e.refDeck || ''} height={560} onChange={(j) => upd({ refDeck: j })} />
-            </Suspense>
-          </Field>
-          <Field label="📘 नमुना / सूचना (ऐच्छिक)" full>
+          <Field label="📘 पर्यायी नमुना (LibreOffice संदर्भ फाइल नसल्यास हाच LibreOffice मध्ये उघडतो)" full>
             <SampleEditor value={e.sampleHtml || ''} onChange={(v) => upd({ sampleHtml: v })} />
           </Field>
         </>

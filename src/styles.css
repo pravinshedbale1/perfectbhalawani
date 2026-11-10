@@ -674,3 +674,17 @@ table.metrics td { padding: 5px 8px; border-bottom: 1px solid var(--line); font-
 .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid #999; vertical-align: -1px; }
 .desk-ref .imp { height: 100% !important; }
 .calc-ref { background: #fff; border-radius: 6px; }
+
+/* ================= LibreOffice पान (/office.html) ================= */
+.lo-app { height: 100vh; overflow: hidden; background: #d9d9d9; }
+.lo-bar { display: flex; align-items: center; gap: 12px; padding: 0 12px; background: var(--navy-deep); color: #fff; position: relative; z-index: 3; }
+.lo-stage { position: relative; }
+/* LibreOffice खिडक्यांचे title bar (26px) आमच्या पट्टीखाली लपवण्यासाठी canvas वर सरकवला आहे */
+.lo-stage #qtcanvas { position: absolute; left: 0; top: -26px; display: block; width: 100%; height: calc(100% + 26px); border: 0; padding: 0; outline: none; }
+.lo-load { position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(135deg, #eef3fb, #fff7ef); }
+.lo-card { background: #fff; border-radius: 18px; padding: 28px 30px; width: min(560px, 92vw); text-align: center; box-shadow: var(--shadow-lg); }
+.lo-card h2 { margin: 10px 0; color: var(--navy); }
+.lo-card .spinner { margin: 14px auto 0; }
+.lo-metrics { position: absolute; right: 12px; bottom: 12px; z-index: 5; background: #fff; border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow-lg); max-width: 380px; }
+.lo-metrics summary { cursor: pointer; font-weight: 700; }
+.lo-ref-box { background: #f6f9ff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
