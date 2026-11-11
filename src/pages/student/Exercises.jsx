@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../lib/auth';
 import { useCollection } from '../../lib/useData';
 import { submitExercise, MAX_UPLOAD_MB, isBlockedFile, driveConfigured, moduleVisibleTo } from '../../lib/api';
@@ -17,6 +17,14 @@ export default function StudentExercises() {
   const subs = useCollection('submissions', [['studentId', '==', s.id]]);
   const [mod, setMod] = useState(null);
   const [ex, setEx] = useState(null);
+
+  // LibreOffice पानातून परत आल्यावर (?ex=ID) तोच सराव उघडा
+  useEffect(() => {
+    const id = new URLSearchParams(location.search).get('ex');
+    if (!id || exercises.loading) return;
+    const x = exercises.data.find((y) => y.id === id);
+    if (x) { setEx(x); window.history.replaceState(null, '', location.pathname); }
+  }, [exercises.loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (modules.loading || exercises.loading || subs.loading) return <Spinner />;
   const mods = modules.data.filter((m) => moduleVisibleTo(m, s.courseId)).sort(byOrder);
@@ -134,6 +142,8 @@ function Checklist() {
 }
 
 // पोर्टलवरच करायचा सराव: माहिती + मागील निकाल + "सराव सुरू करा" (पूर्ण स्क्रीन)
+const OFFICE = ['writer', 'calc', 'impress'];
+
 function PortalDetail({ ex, module, sub, student, onDone }) {
   const [open, setOpen] = useState(false);
   const k = KINDS[ex.kind];
@@ -144,9 +154,9 @@ function PortalDetail({ ex, module, sub, student, onDone }) {
     keys: 'खालील बटण दाबा, स्क्रीनवरील अक्षरे तशीच टाइप करा. चूक लाल दिसेल; Backspace ने दुरुस्त करा. पूर्ण झाल्यावर निकाल दिसेल.',
     typing: `डावीकडील परिच्छेद उजवीकडील पानावर टाइप करा. वेळ ${Math.round(Number(ex.duration || 600) / 60)} मिनिटे. शब्दानुसार तपासणी: बरोबर (हिरवा), चुकीचा (लाल), गाळलेला (पिवळा).`,
     letter: 'डावीकडील पत्र उजवीकडील Word सारख्या संपादकात formatting सह (Bold, Underline, Center, Right इ.) तसेच टाइप करा.',
-    writer: 'डावीकडे नमुना, उजवीकडे Word / Writer सारखा पूर्ण संपादक (File, Edit, Insert, Format, Table menus; font, रंग, alignment, tables, चित्रे, page break). नमुन्याप्रमाणे document तयार करून Submit Work दाबा.',
-    calc: 'उजवीकडे Excel / Calc सारखी पूर्ण sheet: सूत्रे (=SUM, =AVERAGE, =IF…), formatting, merge, borders, अनेक sheets. संदर्भाप्रमाणे sheet तयार करा आणि FINISH दाबा.',
-    impress: 'उजवीकडे PowerPoint / Impress सारखा slides editor: नवीन slide (layouts), text, आकार, चित्रे, tables, themes, Slide Show. नमुन्याप्रमाणे presentation तयार करा.',
+    writer: 'खरे LibreOffice Writer उघडेल — डावीकडे नमुना (फक्त वाचा; कोणत्याही मजकुरावर क्लिक करून त्याचा font / size toolbar मध्ये पहा), उजवीकडे तुमचा नवीन document. सर्व menus व पर्याय (Format → Page, Styles, Table, borders इ.) वापरा आणि "✓ पूर्ण करा" दाबा.',
+    calc: 'खरे LibreOffice Calc उघडेल — डावीकडे संदर्भ sheet (फक्त वाचा; cell वर क्लिक करून सूत्र व formatting पहा), उजवीकडे तुमची sheet. सूत्रे, formatting, merge, borders, charts — सर्व पर्याय वापरा.',
+    impress: 'खरे LibreOffice Impress उघडेल — डावीकडे नमुना presentation, उजवीकडे तुमचे slides. Layouts, themes, आकार, चित्रे, animations, Slide Show — सर्व पर्याय वापरा.',
     statement: 'डावीकडील तक्ता उजवीकडील Excel sheet मध्ये त्याच cells मध्ये तसाच भरा.',
     email: 'Mail to, Subject, CC, BCC व मजकूर — सर्व तंतोतंत टाइप करून Send दाबा.',
     mcq: `${(ex.questions || []).length} प्रश्न. उत्तर निवडताच बरोबर/चूक दिसेल.`,
@@ -160,7 +170,10 @@ function PortalDetail({ ex, module, sub, student, onDone }) {
           <p>{how}</p>
           {(ex.kind === 'typing' || ex.kind === 'keys') && <p className="small muted">लक्ष्य वेग: {ex.targetWpm || TARGET_WPM[ex.lang] || 30} WPM · भाषा: {ex.lang === 'mr' ? 'मराठी (संगणकावर Marathi keyboard सुरू करा)' : 'English'}</p>}
           {ex.steps?.length > 0 && (<><h3 className="mt">सूचना</h3><ol className="steps">{ex.steps.map((st, i) => <li key={i}>{st}</li>)}</ol></>)}
-          <button className="btn saffron big mt" onClick={() => setOpen(true)}>▶ सराव सुरू करा</button>
+          {OFFICE.includes(ex.kind)
+            ? <a className="btn saffron big mt" href={`/office.html?mode=practice&ex=${ex.id}`}>▶ LibreOffice मध्ये सराव सुरू करा</a>
+            : <button className="btn saffron big mt" onClick={() => setOpen(true)}>▶ सराव सुरू करा</button>}
+          {OFFICE.includes(ex.kind) && <p className="small muted">पहिल्यांदा LibreOffice (सुमारे 82 MB) डाउनलोड होते — नंतर लगेच उघडते. Chrome / Edge व संगणक वापरा.</p>}
           <p className="small muted">फाइल अपलोड नाही — सर्व काम इथेच. सादर करताच गुण आपोआप मिळतात. कितीही वेळा प्रयत्न करा — सर्वोत्तम गुण राहतात.</p>
         </div>
         <div className="card">

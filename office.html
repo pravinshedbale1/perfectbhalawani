@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="mr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>LibreOffice सराव — परफेक्ट कॉम्प्युटर्स</title>
+    <script>
+      // LibreOffice साठी cross-origin isolation: पहिल्यांदा service worker नोंदवून पान एकदा reload होते.
+      (function () {
+        if (window.crossOriginIsolated || !('serviceWorker' in navigator)) return;
+        var n = Number(sessionStorage.getItem('coiReload') || 0);
+        navigator.serviceWorker.register('/coi-sw.js', { scope: '/office' }).then(function (reg) {
+          var go = function () { if (n < 2) { sessionStorage.setItem('coiReload', String(n + 1)); location.reload(); } };
+          if (reg.active && !navigator.serviceWorker.controller) go();
+          else if (reg.installing || reg.waiting) (reg.installing || reg.waiting).addEventListener('statechange', function (ev) { if (ev.target.state === 'activated') go(); });
+          else if (reg.active) go();
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="office-root"></div>
+    <script type="module" src="/src/office/main.jsx"></script>
+  </body>
+</html>

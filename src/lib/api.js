@@ -162,6 +162,11 @@ export const isBlockedFile = (file) => {
   return /^(video|audio)\//.test(file.type || '') || BLOCKED_EXT.includes(ext);
 };
 
+// LibreOffice सरावाची मोठी फाइल Drive मध्ये (Firestore मर्यादेपेक्षा मोठी असल्यास)
+export async function uploadWorkFile({ student, exercise, base64, fileName, mimeType }) {
+  return callScript({ action: 'upload', base64, fileName, mimeType, batchName: student.batchName, studentName: student.name, exerciseId: exercise.id, exerciseTitle: exercise.title });
+}
+
 export async function submitExercise({ student, exercise, module, file, note }) {
   if (isBlockedFile(file)) throw new Error('व्हिडिओ व ऑडिओ/गाण्यांच्या फाइल्स सादर करता येत नाहीत.');
   if (!file.size) throw new Error('फाइल रिकामी आहे.');
