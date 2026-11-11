@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { deleteField, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { deleteDoc, deleteField, doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../lib/auth';
 import { KINDS, submitPractice, fmtClock } from '../lib/practice';
-import { uploadWorkFile } from '../lib/api';
+import { uploadWorkFile, uploadReferenceFile, downloadDriveFile } from '../lib/api';
 import { compareOffice } from '../lib/lowaCompare';
 import { parseDeck } from '../lib/office';
 import { ResultCard } from '../components/practice/Shell';
@@ -13,7 +13,6 @@ import { startLowa, checkDevice, ask, b64FromBytes, bytesFromB64, DOWNLOAD_MB } 
 const EXT = { writer: 'odt', calc: 'ods', impress: 'odp' };
 const MIME = { odt: 'application/vnd.oasis.opendocument.text', ods: 'application/vnd.oasis.opendocument.spreadsheet', odp: 'application/vnd.oasis.opendocument.presentation' };
 const HTML_FILTER = { writer: 'HTML (StarWriter)', calc: 'HTML (StarCalc)', impress: 'HTML (StarWriter)' };
-const MAX_FIRESTORE = 700 * 1024;
 const BAR_H = 52;
 const q = new URLSearchParams(location.search);
 const MODE = q.get('mode') || 'practice'; // practice | ref | view
@@ -111,7 +110,8 @@ export default function OfficeApp() {
       let ref = null;
       // संदर्भ फाइल वेगळ्या record मध्ये (exerciseFiles/{id}) — जुन्या प्रतींसाठी ex.refFile
       let refB64 = ex.refFile || null;
-      if (ex.hasRefFile) { const fd = await getDoc(doc(db, 'exerciseFiles', ex.id)); if (fd.exists()) refB64 = fd.data().file; }
+      if (ex.refDriveId) refB64 = await downloadDriveFile(ex.refDriveId);
+      else if (ex.hasRefFile) { const fd = await getDoc(doc(db, 'exerciseFiles', ex.id)); if (fd.exists()) refB64 = fd.data().file; }
       if (refB64) {
         L.FS.writeFile(`/tmp/office/ref.${ext}`, bytesFromB64(refB64));
         ref = { url: `file:///tmp/office/ref.${ext}` };
@@ -134,8 +134,9 @@ export default function OfficeApp() {
       }
       if (MODE === 'view') {
         let wb64 = sub?.work?.file || null;
+        if (!wb64 && sub?.work?.driveId) wb64 = await downloadDriveFile(sub.work.driveId);
         if (!wb64 && sub?.work?.hasFile) { const fd = await getDoc(doc(db, 'submissionFiles', sub.id)); if (fd.exists()) wb64 = fd.data().file; }
-        if (!wb64) throw new Error('या सादरीकरणाची फाइल Drive मध्ये आहे — मूल्यांकन पानावरील Drive लिंकने उघडा.');
+        if (!wb64) throw new Error('या सादरीकरणाची फाइल सापडली नाही.');
         L.FS.writeFile(`/tmp/office/work.${ext}`, bytesFromB64(wb64));
         work = { url: `file:///tmp/office/work.${ext}` };
       }
@@ -227,15 +228,10 @@ export default function OfficeApp() {
       const fileName = `${auth.profile.loginId || 'student'}_${ex.title}`.replace(/[^\wऀ-ॿ-]+/g, '_').slice(0, 70) + '.' + ext;
       const b64 = b64FromBytes(bytes);
       const work = { ext, fileName, size: bytes.length };
-      if (b64.length <= MAX_FIRESTORE) {
-        // फाइल वेगळ्या record मध्ये — submissions यादी हलकी राहते
-        await setDoc(doc(db, 'submissionFiles', `${auth.profile.id}_${ex.id}`), { studentId: auth.profile.id, batchId: auth.profile.batchId || '', exerciseId: ex.id, file: b64, ext, size: bytes.length, at: serverTimestamp() });
-        work.hasFile = true;
-        work.file = deleteField(); // जुनी (submission मधील) प्रत काढा
-      } else {
-        const up = await uploadWorkFile({ student: auth.profile, exercise: ex, base64: b64, fileName, mimeType: MIME[ext] });
-        work.driveUrl = up.url; work.driveId = up.fileId;
-      }
+      // सर्व फाइल्स Google Drive मध्ये ("Perfect Computers Submissions / बॅच / विद्यार्थी")
+      const up = await uploadWorkFile({ student: auth.profile, exercise: ex, base64: b64, fileName, mimeType: MIME[ext] });
+      work.driveUrl = up.url; work.driveId = up.fileId;
+      work.file = deleteField(); work.hasFile = deleteField(); // जुन्या चाचणी प्रती काढा
       const r = await submitPractice({ student: auth.profile, exercise: ex, module: mod, metrics: result.metrics, work, prev: sub });
       setSaved(r);
       draftOp('del', draftKey());
@@ -250,9 +246,10 @@ export default function OfficeApp() {
       const L = lowa.current, ext = EXT[kind];
       await ask(L.port, { cmd: 'save', kind, url: `file:///tmp/office/out.${ext}` }, 'saved', 60000);
       const b64 = b64FromBytes(L.FS.readFile(`/tmp/office/out.${ext}`));
-      if (b64.length > MAX_FIRESTORE) throw new Error('संदर्भ फाइल खूप मोठी आहे (700 KB पेक्षा जास्त). मोठी चित्रे लहान करा.');
-      await setDoc(doc(db, 'exerciseFiles', ex.id), { file: b64, ext, size: Math.round(b64.length * 0.75), at: serverTimestamp() });
-      await updateDoc(doc(db, 'exercises', ex.id), { hasRefFile: true, refFileExt: ext, refFileSize: Math.round(b64.length * 0.75), refUpdatedAt: serverTimestamp(), refFile: deleteField() });
+      const fileName = `${ex.title}.${ext}`.replace(/[^\w\u0900-\u097F.-]+/g, '_');
+      const up = await uploadReferenceFile({ exercise: ex, base64: b64, fileName, mimeType: MIME[ext] });
+      await updateDoc(doc(db, 'exercises', ex.id), { hasRefFile: true, refDriveId: up.fileId, refDriveUrl: up.url, refFileExt: ext, refFileSize: up.size, refUpdatedAt: serverTimestamp(), refFile: deleteField() });
+      await deleteDoc(doc(db, 'exerciseFiles', ex.id)).catch(() => {});
       alert('संदर्भ जतन झाला ✅ विद्यार्थ्यांना हाच नमुना दिसेल व याच्याशी तुलना करून गुण मिळतील.');
     } catch (x) { alert(x.message); }
     finally { setBusy(''); }

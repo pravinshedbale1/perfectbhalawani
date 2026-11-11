@@ -8,6 +8,7 @@ import SampleView from '../SampleView';
 import { Spinner } from '../ui';
 import { downloadDoc, downloadXlsx } from '../../lib/office';
 import { doc, getDoc } from 'firebase/firestore';
+import { downloadDriveFile } from '../../lib/api';
 import { db } from '../../firebase';
 
 // जड संपादक (TinyMCE / Fortune-sheet / Fabric) गरज असेल तेव्हाच लोड
@@ -87,10 +88,12 @@ export function WorkView({ ex, sub }) {
   const dlName = `${sub.studentName || 'student'}_${ex.title || 'practice'}`.replace(/[^\w\u0900-\u097F]+/g, '_').slice(0, 60);
   if (w.ext) {
     // खऱ्या LibreOffice मध्ये केलेले काम (.odt / .ods / .odp)
-    const has = !!(w.file || w.hasFile);
+    const has = !!(w.file || w.hasFile || w.driveId);
     const dl = async () => {
       let b64 = w.file;
-      if (!b64) { const fd = await getDoc(doc(db, 'submissionFiles', sub.id)); if (!fd.exists()) return alert('फाइल सापडली नाही.'); b64 = fd.data().file; }
+      if (!b64 && w.driveId) b64 = await downloadDriveFile(w.driveId).catch((e) => { alert(e.message); return null; });
+      if (!b64 && w.hasFile) { const fd = await getDoc(doc(db, 'submissionFiles', sub.id)); if (fd.exists()) b64 = fd.data().file; }
+      if (!b64) return;
       const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([bytes]));

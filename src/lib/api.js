@@ -162,9 +162,16 @@ export const isBlockedFile = (file) => {
   return /^(video|audio)\//.test(file.type || '') || BLOCKED_EXT.includes(ext);
 };
 
-// LibreOffice सरावाची मोठी फाइल Drive मध्ये (Firestore मर्यादेपेक्षा मोठी असल्यास)
+// LibreOffice फाइल्स Google Drive मध्ये: विद्यार्थ्याचे काम, Admin चा संदर्भ; उघडताना Drive मधून परत
 export async function uploadWorkFile({ student, exercise, base64, fileName, mimeType }) {
   return callScript({ action: 'upload', base64, fileName, mimeType, batchName: student.batchName, studentName: student.name, exerciseId: exercise.id, exerciseTitle: exercise.title });
+}
+export async function uploadReferenceFile({ exercise, base64, fileName, mimeType }) {
+  return callScript({ action: 'upload', kind: 'reference', base64, fileName, mimeType, exerciseId: exercise.id, exerciseTitle: exercise.title });
+}
+export async function downloadDriveFile(fileId) {
+  const r = await callScript({ action: 'download', fileId });
+  return r.base64;
 }
 
 export async function submitExercise({ student, exercise, module, file, note }) {

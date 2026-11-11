@@ -28,13 +28,20 @@ function doPost(e) {
   try {
     var body = JSON.parse(e.postData.contents);
     var user = verifyIdToken_(body.idToken);
-    var student = getStudent_(user.localId, body.idToken);
+    var admin = isAdmin_(user.localId, body.idToken);
+    var student = admin ? null : getStudent_(user.localId, body.idToken);
 
     switch (body.action) {
       case 'upload':
+        if (admin) {
+          if (body.kind !== 'reference') throw new Error('Admin फक्त संदर्भ (नमुना) फाइल अपलोड करू शकतो.');
+          return json_(uploadReference_(user, body));
+        }
         return json_(upload_(user, student, body));
+      case 'download':
+        return json_(download_(user, admin, body));
       case 'ping':
-        return json_({ ok: true, uid: user.localId, student: student.loginId });
+        return json_({ ok: true, uid: user.localId, admin: admin, student: student ? student.loginId : null });
       default:
         return json_({ ok: false, error: 'अज्ञात action' });
     }
@@ -74,11 +81,51 @@ function upload_(user, student, body) {
   var stamp = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'dd-MM-yyyy_HH-mm');
   var name = clean_(body.exerciseTitle || 'सराव') + '__' + stamp + '__' + clean_(body.fileName || 'file');
   var file = createFile_(studentFolderId, name, body.mimeType || 'application/octet-stream', bytes,
-    'Student: ' + (student.loginId || '') + ' ' + (student.name || '') + '\nUID: ' + user.localId + '\nExercise: ' + (body.exerciseId || ''));
+    'Student: ' + (student.loginId || '') + ' ' + (student.name || '') + '\nUID: ' + user.localId + '\nExercise: ' + (body.exerciseId || ''),
+    { kind: 'submission', studentId: user.localId, exerciseId: String(body.exerciseId || '') });
   // लिंक असलेल्या व्यक्तीला फक्त पाहता येईल (Admin व तो विद्यार्थी अ‍ॅपमधून उघडू शकतात)
   api_('post', DRIVE + '/files/' + file.id + '/permissions', { role: 'reader', type: 'anyone' });
 
   return { ok: true, fileId: file.id, fileName: body.fileName, url: file.webViewLink, size: bytes.length };
+}
+
+// ---------- संदर्भ (नमुना) फाइल — फक्त Admin ----------
+function uploadReference_(user, body) {
+  if (!body.base64) throw new Error('फाइल मिळाली नाही');
+  var bytes = Utilities.base64Decode(body.base64);
+  if (bytes.length > MAX_BYTES) throw new Error('फाइल 10 MB पेक्षा मोठी आहे');
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  var refFolderId;
+  try {
+    var rootId = folder_('root', '', ROOT_FOLDER_NAME);
+    refFolderId = folder_('refs', rootId, 'संदर्भ फाइल्स (References)');
+  } finally {
+    lock.releaseLock();
+  }
+  var stamp = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'dd-MM-yyyy_HH-mm');
+  var name = clean_(body.exerciseTitle || 'सराव') + '__संदर्भ__' + stamp + '__' + clean_(body.fileName || 'file');
+  var file = createFile_(refFolderId, name, body.mimeType || 'application/octet-stream', bytes,
+    'Reference for exercise: ' + (body.exerciseId || ''), { kind: 'reference', exerciseId: String(body.exerciseId || '') });
+  return { ok: true, fileId: file.id, fileName: body.fileName, url: file.webViewLink, size: bytes.length };
+}
+
+// ---------- फाइल परत आणा (LibreOffice मध्ये उघडण्यासाठी) ----------
+// Admin: कोणतीही; विद्यार्थी: स्वतःची सादर फाइल किंवा संदर्भ फाइल
+function download_(user, admin, body) {
+  if (!body.fileId || !/^[\w-]{10,}$/.test(String(body.fileId))) throw new Error('फाइल ID चुकीचा');
+  var meta = api_('get', DRIVE + '/files/' + body.fileId + '?fields=id,name,size,mimeType,appProperties,trashed', null, true);
+  if (!meta || meta.trashed) throw new Error('फाइल Drive मध्ये सापडली नाही');
+  var ap = meta.appProperties || {};
+  if (!admin && !(ap.kind === 'reference' || (ap.kind === 'submission' && ap.studentId === user.localId))) {
+    throw new Error('ही फाइल उघडण्याची परवानगी नाही');
+  }
+  if (Number(meta.size || 0) > MAX_BYTES) throw new Error('फाइल खूप मोठी आहे');
+  var res = UrlFetchApp.fetch(DRIVE + '/files/' + body.fileId + '?alt=media', {
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true,
+  });
+  if (res.getResponseCode() >= 300) throw new Error('Drive मधून फाइल आणता आली नाही');
+  return { ok: true, name: meta.name, mimeType: meta.mimeType, base64: Utilities.base64Encode(res.getContent()) };
 }
 
 // प्रसिद्ध व्हिडिओ/ऑडिओ फॉरमॅट्सची सुरुवातीची bytes (magic numbers)
@@ -111,9 +158,9 @@ function folder_(key, parentId, name) {
   return id;
 }
 
-function createFile_(parentId, name, mime, bytes, description) {
+function createFile_(parentId, name, mime, bytes, description, appProperties) {
   var boundary = 'pcb' + Utilities.getUuid();
-  var meta = JSON.stringify({ name: name, parents: [parentId], description: description });
+  var meta = JSON.stringify({ name: name, parents: [parentId], description: description, appProperties: appProperties || {} });
   var head = Utilities.newBlob('--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + meta +
     '\r\n--' + boundary + '\r\nContent-Type: ' + mime + '\r\n\r\n').getBytes();
   var tail = Utilities.newBlob('\r\n--' + boundary + '--').getBytes();
@@ -154,6 +201,13 @@ function verifyIdToken_(idToken) {
     throw new Error('लॉगिन सत्र संपले आहे. कृपया पुन्हा लॉगिन करा.');
   }
   return data.users[0];
+}
+
+// Admin आहे का? (admins/{uid} — rules: स्वतःचा record वाचता येतो)
+function isAdmin_(uid, idToken) {
+  var url = 'https://firestore.googleapis.com/v1/projects/' + FIREBASE_PROJECT + '/databases/(default)/documents/admins/' + uid;
+  var res = UrlFetchApp.fetch(url, { headers: { Authorization: 'Bearer ' + idToken }, muteHttpExceptions: true });
+  return res.getResponseCode() === 200;
 }
 
 // विद्यार्थ्याच्या स्वतःच्या token ने त्याचा Firestore record वाचा (rules: फक्त स्वतःचा record)
