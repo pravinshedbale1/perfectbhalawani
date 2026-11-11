@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { deleteField, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../lib/auth';
 import { KINDS, submitPractice, fmtClock } from '../lib/practice';
@@ -109,8 +109,11 @@ export default function OfficeApp() {
       setPhase('open');
       const ext = EXT[ex.kind];
       let ref = null;
-      if (ex.refFile) {
-        L.FS.writeFile(`/tmp/office/ref.${ext}`, bytesFromB64(ex.refFile));
+      // संदर्भ फाइल वेगळ्या record मध्ये (exerciseFiles/{id}) — जुन्या प्रतींसाठी ex.refFile
+      let refB64 = ex.refFile || null;
+      if (ex.hasRefFile) { const fd = await getDoc(doc(db, 'exerciseFiles', ex.id)); if (fd.exists()) refB64 = fd.data().file; }
+      if (refB64) {
+        L.FS.writeFile(`/tmp/office/ref.${ext}`, bytesFromB64(refB64));
         ref = { url: `file:///tmp/office/ref.${ext}` };
       } else if (ex.kind === 'calc' && ex.refBook) {
         ref = { build: 'calc', data: JSON.parse(ex.refBook) };
@@ -130,8 +133,10 @@ export default function OfficeApp() {
         }
       }
       if (MODE === 'view') {
-        if (!sub?.work?.file) throw new Error('या सादरीकरणाची फाइल Drive मध्ये आहे — मूल्यांकन पानावरील Drive लिंकने उघडा.');
-        L.FS.writeFile(`/tmp/office/work.${ext}`, bytesFromB64(sub.work.file));
+        let wb64 = sub?.work?.file || null;
+        if (!wb64 && sub?.work?.hasFile) { const fd = await getDoc(doc(db, 'submissionFiles', sub.id)); if (fd.exists()) wb64 = fd.data().file; }
+        if (!wb64) throw new Error('या सादरीकरणाची फाइल Drive मध्ये आहे — मूल्यांकन पानावरील Drive लिंकने उघडा.');
+        L.FS.writeFile(`/tmp/office/work.${ext}`, bytesFromB64(wb64));
         work = { url: `file:///tmp/office/work.${ext}` };
       }
       // LibreOffice कडून येणारे संदेश: मसुदा जतन (Ctrl+S / File → Save), खिडकी बंद
@@ -222,8 +227,12 @@ export default function OfficeApp() {
       const fileName = `${auth.profile.loginId || 'student'}_${ex.title}`.replace(/[^\wऀ-ॿ-]+/g, '_').slice(0, 70) + '.' + ext;
       const b64 = b64FromBytes(bytes);
       const work = { ext, fileName, size: bytes.length };
-      if (b64.length <= MAX_FIRESTORE) work.file = b64;
-      else {
+      if (b64.length <= MAX_FIRESTORE) {
+        // फाइल वेगळ्या record मध्ये — submissions यादी हलकी राहते
+        await setDoc(doc(db, 'submissionFiles', `${auth.profile.id}_${ex.id}`), { studentId: auth.profile.id, batchId: auth.profile.batchId || '', exerciseId: ex.id, file: b64, ext, size: bytes.length, at: serverTimestamp() });
+        work.hasFile = true;
+        work.file = deleteField(); // जुनी (submission मधील) प्रत काढा
+      } else {
         const up = await uploadWorkFile({ student: auth.profile, exercise: ex, base64: b64, fileName, mimeType: MIME[ext] });
         work.driveUrl = up.url; work.driveId = up.fileId;
       }
@@ -242,7 +251,8 @@ export default function OfficeApp() {
       await ask(L.port, { cmd: 'save', kind, url: `file:///tmp/office/out.${ext}` }, 'saved', 60000);
       const b64 = b64FromBytes(L.FS.readFile(`/tmp/office/out.${ext}`));
       if (b64.length > MAX_FIRESTORE) throw new Error('संदर्भ फाइल खूप मोठी आहे (700 KB पेक्षा जास्त). मोठी चित्रे लहान करा.');
-      await updateDoc(doc(db, 'exercises', ex.id), { refFile: b64, refFileExt: ext, refUpdatedAt: serverTimestamp() });
+      await setDoc(doc(db, 'exerciseFiles', ex.id), { file: b64, ext, size: Math.round(b64.length * 0.75), at: serverTimestamp() });
+      await updateDoc(doc(db, 'exercises', ex.id), { hasRefFile: true, refFileExt: ext, refFileSize: Math.round(b64.length * 0.75), refUpdatedAt: serverTimestamp(), refFile: deleteField() });
       alert('संदर्भ जतन झाला ✅ विद्यार्थ्यांना हाच नमुना दिसेल व याच्याशी तुलना करून गुण मिळतील.');
     } catch (x) { alert(x.message); }
     finally { setBusy(''); }

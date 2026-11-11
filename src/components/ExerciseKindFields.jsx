@@ -67,11 +67,11 @@ export default function ExerciseKindFields({ e, set }) {
               </p>
               <div className="row mt">
                 {e.id
-                  ? <button type="button" className="btn saffron" onClick={() => window.open(`/office.html?mode=ref&ex=${e.id}`, '_blank')}>🖥️ LibreOffice मध्ये संदर्भ {e.refFile ? 'बदला' : 'तयार करा'}</button>
+                  ? <button type="button" className="btn saffron" onClick={() => window.open(`/office.html?mode=ref&ex=${e.id}`, '_blank')}>🖥️ LibreOffice मध्ये संदर्भ {e.hasRefFile || e.refFile ? 'बदला' : 'तयार करा'}</button>
                   : <span className="small" style={{ color: 'var(--warn)' }}>आधी हा सराव "जतन करा", मग LibreOffice मध्ये संदर्भ तयार करता येईल.</span>}
-                {e.refFile && <span className="badge ok">✓ संदर्भ फाइल ({Math.round((e.refFile.length * 0.75) / 1024)} KB)</span>}
-                {e.refFile && <button type="button" className="btn sm light" onClick={() => confirm('LibreOffice संदर्भ फाइल काढायची? (खालील नमुना वापरला जाईल)') && upd({ refFile: '', _clearRef: true })}>🗑 काढा</button>}
-                {!e.refFile && (e.refBook || e.refDeck) && <span className="badge info">जुना संदर्भ (आपोआप LibreOffice मध्ये रूपांतरित होतो)</span>}
+                {(e.hasRefFile || e.refFile) && <span className="badge ok">✓ संदर्भ फाइल ({Math.round((e.refFileSize || (e.refFile || '').length * 0.75) / 1024)} KB)</span>}
+                {(e.hasRefFile || e.refFile) && <button type="button" className="btn sm light" onClick={() => confirm('LibreOffice संदर्भ फाइल काढायची? (खालील नमुना वापरला जाईल)') && upd({ refFile: '', hasRefFile: false, _clearRef: true })}>🗑 काढा</button>}
+                {!(e.hasRefFile || e.refFile) && (e.refBook || e.refDeck) && <span className="badge info">जुना संदर्भ (आपोआप LibreOffice मध्ये रूपांतरित होतो)</span>}
               </div>
               <p className="small muted" style={{ marginBottom: 0 }}>💡 संदर्भ जतन केल्यानंतर या खिडकीत "जतन करा" दाबण्याची गरज नाही — तो थेट जतन होतो.</p>
             </div>

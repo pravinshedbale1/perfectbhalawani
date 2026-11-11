@@ -14,9 +14,16 @@ export const BACKUP_COLLECTIONS = [
   ['leaderboards', 'लीडरबोर्ड'],
   ['boardRows', 'लीडरबोर्ड ओळी'],
   ['notices', 'सूचना'],
+  ['exerciseFiles', 'LibreOffice संदर्भ फाइल्स'],
+  ['submissionFiles', 'LibreOffice सादर फाइल्स'],
   ['counters', 'क्रमांक'],
   ['admins', 'Admin'],
 ];
+
+const FILE_COLLECTIONS = ['exerciseFiles', 'submissionFiles'];
+
+// Excel cell मध्ये जास्तीत जास्त 32767 अक्षरे — लांब मजकूर कापा
+const clip = (v) => (typeof v === 'string' && v.length > 32000 ? v.slice(0, 32000) + '…' : v);
 
 const stamp = () => {
   const d = new Date();
@@ -78,7 +85,8 @@ export async function downloadExcel(data, { includePasswords }) {
   const wb = XLSX.utils.book_new();
   for (const [name, label] of BACKUP_COLLECTIONS) {
     if (!includePasswords && name === 'studentLogins') continue;
-    const rows = (data[name] || []).map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, toCell(v)])));
+    if (FILE_COLLECTIONS.includes(name)) continue; // मोठ्या फाइल्स फक्त JSON बॅकअपमध्ये (Excel cell मर्यादा)
+    const rows = (data[name] || []).map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, clip(toCell(v))])));
     const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ माहिती: 'नोंद नाही' }], { cellDates: true, dateNF: 'dd-mm-yyyy hh:mm' });
     XLSX.utils.book_append_sheet(wb, ws, label.slice(0, 31));
   }

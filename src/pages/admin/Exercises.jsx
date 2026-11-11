@@ -202,7 +202,10 @@ function ModulesTab({ courses, modules, exercises }) {
     const kind = data.kind || 'upload';
     delete data._rk;
     // LibreOffice संदर्भ फाइल फक्त LibreOffice पानातून जतन होते — इथून जुनी प्रत परत लिहू नका
-    if (data._clearRef) { data.refFile = deleteField(); data.refFileExt = deleteField(); } else { delete data.refFile; delete data.refFileExt; delete data.refUpdatedAt; }
+    if (data._clearRef) {
+      data.refFile = deleteField(); data.refFileExt = deleteField(); data.refFileSize = deleteField(); data.hasRefFile = false;
+      if (data.id) await removeDoc('exerciseFiles', data.id).catch(() => {});
+    } else { delete data.refFile; delete data.refFileExt; delete data.refFileSize; delete data.refUpdatedAt; delete data.hasRefFile; }
     delete data._clearRef;
     if (new Blob([(data.sampleHtml || '') + (data.refBook || '') + (data.refDeck || '')]).size > 300 * 1024) return setErr('नमुना खूप मोठा आहे (900 KB पेक्षा जास्त). मोठी चित्रे काढून लिंकने जोडा.');
     if ((kind === 'typing' || kind === 'keys') && !String(data.target || '').trim()) return setErr('टाइप करायचा मजकूर आवश्यक आहे.');

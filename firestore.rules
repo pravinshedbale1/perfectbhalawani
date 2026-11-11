@@ -140,6 +140,22 @@ service cloud.firestore {
         && request.resource.data.total >= 0 && request.resource.data.total <= request.resource.data.max;
     }
 
+    // LibreOffice सरावाच्या फाइल्स (submissions पासून वेगळ्या — यादी हलकी राहण्यासाठी)
+    match /submissionFiles/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.studentId == request.auth.uid);
+      allow create, update: if isAdmin() || (isStudent() && me().active != false
+        && id == request.auth.uid + '_' + request.resource.data.exerciseId
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.keys().hasOnly(['studentId', 'batchId', 'exerciseId', 'file', 'ext', 'size', 'at']));
+      allow delete: if isAdmin();
+    }
+
+    // Admin ने LibreOffice मध्ये बनवलेले संदर्भ (नमुना) — सर्व लॉगिन वापरकर्ते वाचू शकतात
+    match /exerciseFiles/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
     // leaderboards/{batchId} — Admin गुण दिल्यावर अद्ययावत होते
     match /leaderboards/{batchId} {
       allow read: if isAdmin() || (isStudent() && me().batchId == batchId);
